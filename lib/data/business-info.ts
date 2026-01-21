@@ -70,7 +70,8 @@ export const businessInfo = {
   logo: "/logo.png",
 
   // Booking (leave empty string if no booking system)
-  bookingUrl: "",
+  bookingUrl: "https://example.com/book",
+  showBookingButton: true, // Set to false to hide booking buttons in navbar/footer
 
   // Optional: Price range for schema.org ($, $$, $$$, $$$$)
   priceRange: "$$",

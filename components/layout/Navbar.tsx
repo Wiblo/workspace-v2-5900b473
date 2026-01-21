@@ -97,7 +97,7 @@ export function Navbar() {
             </a>
 
             {/* Book Appointment CTA (desktop only) */}
-            {businessInfo.bookingUrl && (
+            {businessInfo.showBookingButton && businessInfo.bookingUrl && (
               <div className="ml-2 hidden md:block">
                 <div className="flex items-center justify-end">
                   <a
@@ -142,7 +142,7 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
-            {businessInfo.bookingUrl && (
+            {businessInfo.showBookingButton && businessInfo.bookingUrl && (
               <li className="flex items-center pt-4">
                 <a
                   href={businessInfo.bookingUrl}
