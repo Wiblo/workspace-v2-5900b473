@@ -136,10 +136,10 @@ export function LocationSection({
         </div>
 
         {/* Map and Info Card */}
-        <div className="overflow-hidden rounded-3xl bg-secondary/10 p-2">
+        <div className="overflow-hidden rounded-4xl bg-secondary/10 p-2">
           <div className="flex w-full flex-col gap-2 lg:flex-row">
             {/* Google Maps Embed */}
-            <div className="h-[300px] w-full shrink-0 overflow-hidden rounded-3xl bg-transparent lg:h-[390px] lg:w-[450px]">
+            <div className="h-[300px] w-full shrink-0 overflow-hidden rounded-4xl bg-transparent lg:h-[390px] lg:w-[450px]">
               <iframe
                 src={mapEmbedUrl}
                 width="100%"
@@ -149,7 +149,7 @@ export function LocationSection({
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title={`${businessInfo.maps.locationName} Location`}
-                className="rounded-3xl"
+                className="rounded-4xl"
               />
             </div>
 
@@ -174,13 +174,13 @@ export function LocationSection({
                       href={directionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative flex min-h-12 items-center justify-center whitespace-nowrap rounded-lg border border-border px-6 py-3 font-medium text-muted-foreground transition-all hover:rounded-xl hover:bg-secondary/20"
+                      className="group relative flex min-h-12 items-center justify-center whitespace-nowrap rounded-lg border border-border px-6 py-3 font-medium text-muted-foreground transition-[background-color,border-radius] hover:rounded-xl hover:bg-secondary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       aria-label="Get Directions"
                     >
                       <span className="flex flex-1 items-center justify-center gap-x-2">
                         <span className="flex flex-row items-center gap-x-[4px]">
                           Get Directions
-                          <span className="h-fit w-fit opacity-50 transition-opacity group-hover:opacity-100">
+                          <span className="h-fit w-fit opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true">
                             <ChevronRight className="h-4 w-4 translate-x-[-3px] scale-[1.15] transition-transform group-hover:translate-x-0" />
                           </span>
                         </span>
@@ -196,7 +196,7 @@ export function LocationSection({
                       href={directionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="transition-colors hover:text-primary"
+                      className="transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <div className="flex flex-col gap-2">
                         <p className="text-sm font-medium text-muted-foreground">
@@ -226,21 +226,21 @@ export function LocationSection({
                       <div className="flex flex-col gap-[2px]">
                         <Link
                           href={getPhoneLink()}
-                          className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                          className="text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                           {businessInfo.phone}
                         </Link>
                         {businessInfo.phoneSecondary && (
                           <Link
                             href={getPhoneLink(businessInfo.phoneSecondary)}
-                            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                            className="text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
                             {businessInfo.phoneSecondary}
                           </Link>
                         )}
                         <Link
                           href={getEmailLink()}
-                          className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                          className="text-sm font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                           {businessInfo.email}
                         </Link>
@@ -288,7 +288,7 @@ export function LocationSection({
 
                       <button
                         onClick={toggleHours}
-                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <span>{showHours ? "See info" : "See hours"}</span>
                         <ChevronDown
@@ -296,6 +296,7 @@ export function LocationSection({
                             "h-4 w-4 transition-transform",
                             showHours && "rotate-180"
                           )}
+                          aria-hidden="true"
                         />
                       </button>
                     </div>
@@ -306,14 +307,14 @@ export function LocationSection({
                         href={businessInfo.bookingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group relative flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-all ease-in-out hover:rounded-xl hover:bg-primary/90"
+                        className="group relative flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-[background-color,border-radius] ease-in-out hover:rounded-xl hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <span className="flex flex-1 items-center justify-center gap-x-2">
                           <span className="flex flex-row items-center gap-x-[4px]">
                             {bookingText}
-                            <span className="relative inline-block h-4 w-4">
-                              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-0" />
-                              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+                            <span className="relative inline-block h-4 w-4" aria-hidden="true">
+                              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-[transform,opacity] duration-200 group-hover:translate-x-1 group-hover:opacity-0" />
+                              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
                             </span>
                           </span>
                         </span>

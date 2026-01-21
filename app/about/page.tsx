@@ -1,9 +1,7 @@
 import type { Metadata } from "next"
-import {
-  AboutFullSection,
-  AboutFeatures,
-  GallerySection,
-} from "@/components/sections"
+import { AboutFullSection } from "@/components/sections/about/AboutFullSection"
+import { AboutFeatures } from "@/components/sections/features/AboutFeatures"
+import { GallerySection } from "@/components/sections/gallery/GallerySection"
 import { businessInfo } from "@/lib/data/business-info"
 
 export const metadata: Metadata = {

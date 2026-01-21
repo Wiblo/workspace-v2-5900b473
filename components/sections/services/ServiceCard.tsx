@@ -40,7 +40,7 @@ export function ServiceCard({
       <Link
         href={`/services/${service.slug}`}
         className={cn(
-          "group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card transition-all hover:border-primary/50 hover:shadow-xl",
+          "group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card transition-[box-shadow,border-color] hover:border-primary/50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           className
         )}
       >
@@ -70,9 +70,9 @@ export function ServiceCard({
           {/* Learn More */}
           <div className="flex items-center gap-2 pt-2 text-sm font-medium text-primary">
             <span>Learn More</span>
-            <span className="relative inline-block h-4 w-4">
-              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-0" />
-              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+            <span className="relative inline-block h-4 w-4" aria-hidden="true">
+              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-[transform,opacity] duration-200 group-hover:translate-x-1 group-hover:opacity-0" />
+              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
             </span>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function ServiceCard({
   return (
     <div
       className={cn(
-        "group h-full overflow-hidden rounded-2xl bg-card shadow-sm transition-all hover:shadow-lg",
+        "group h-full overflow-hidden rounded-2xl bg-card shadow-sm transition-shadow hover:shadow-lg",
         className
       )}
     >
@@ -106,7 +106,7 @@ export function ServiceCard({
         {/* Icon & Title */}
         <div className="mb-3 flex items-start gap-3">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <ServiceIcon name={service.icon} className="h-5 w-5" />
+            <ServiceIcon name={service.icon} className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="flex-1">
             <h3 className="font-heading text-lg font-semibold text-foreground">
@@ -137,7 +137,7 @@ export function ServiceCard({
                 key={idx}
                 className="flex items-center gap-2 text-xs text-muted-foreground"
               >
-                <ChevronRight className="h-3 w-3 flex-shrink-0 text-primary" />
+                <ChevronRight className="h-3 w-3 flex-shrink-0 text-primary" aria-hidden="true" />
                 <span>{benefit}</span>
               </li>
             ))}
@@ -148,12 +148,12 @@ export function ServiceCard({
         <div className="mt-auto border-t border-border pt-4">
           <Link
             href={`/services/${service.slug}`}
-            className="group/btn flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="group/btn flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Learn More
-            <span className="relative inline-block h-4 w-4">
-              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-all duration-200 group-hover/btn:translate-x-1 group-hover/btn:opacity-0" />
-              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover/btn:translate-x-0 group-hover/btn:opacity-100" />
+            <span className="relative inline-block h-4 w-4" aria-hidden="true">
+              <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-[transform,opacity] duration-200 group-hover/btn:translate-x-1 group-hover/btn:opacity-0" />
+              <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover/btn:translate-x-0 group-hover/btn:opacity-100" />
             </span>
           </Link>
         </div>

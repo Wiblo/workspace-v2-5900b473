@@ -1,8 +1,11 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { HeroWithImage, ServiceDetailSection } from "@/components/sections"
+import { HeroWithImage } from "@/components/sections/hero/HeroWithImage"
+import { ServiceDetailSection } from "@/components/sections/services/ServiceDetailSection"
 import { getServiceBySlug, getAllServiceSlugs } from "@/lib/data/services"
 import { businessInfo } from "@/lib/data/business-info"
+import { JsonLd, generateServiceSchema } from "@/lib/seo/json-ld"
+import { generateServiceMetadata } from "@/lib/seo/metadata"
 
 // =============================================================================
 // TYPES
@@ -36,15 +39,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  return {
-    title: `${service.name} | ${businessInfo.name}`,
+  return generateServiceMetadata({
+    name: service.name,
     description: service.shortDescription,
-    openGraph: {
-      title: service.name,
-      description: service.shortDescription,
-      images: service.image ? [{ url: service.image }] : undefined,
-    },
-  }
+    slug: service.slug,
+    image: service.image,
+  })
 }
 
 // =============================================================================
@@ -74,36 +74,17 @@ export default async function ServicePage({ params }: Props) {
   // (React components can't be serialized across server/client boundary)
   const { icon: _icon, ...serviceData } = service
 
-  // Build JSON-LD structured data for SEO
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.name,
-    description: service.description,
-    provider: {
-      "@type": "LocalBusiness",
-      name: businessInfo.name,
-      url: businessInfo.url,
-    },
-    areaServed: {
-      "@type": "City",
-      name: businessInfo.address.city,
-    },
-    ...(service.price && {
-      offers: {
-        "@type": "Offer",
-        price: service.price.replace(/[^0-9.]/g, ""),
-        priceCurrency: "USD", // Update for your currency
-      },
-    }),
-  }
-
   return (
     <>
       {/* JSON-LD Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <JsonLd
+        data={generateServiceSchema({
+          name: service.name,
+          description: service.description,
+          slug: service.slug,
+          price: service.price,
+          image: service.image,
+        })}
       />
 
       {/* Hero with service image */}

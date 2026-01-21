@@ -1,5 +1,3 @@
-"use client"
-
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Container } from "@/components/layout/Container"
@@ -19,7 +17,7 @@ export function AboutFullSection({ className }: AboutFullSectionProps) {
       <Container>
         <div className="flex flex-col items-center gap-10 md:flex-row md:gap-20 xl:gap-[140px]">
           {/* Desktop Image */}
-          <div className="relative hidden aspect-square w-full shrink-0 overflow-hidden rounded-3xl md:flex md:max-h-[300px] md:max-w-[300px] xl:max-h-[520px] xl:max-w-[520px]">
+          <div className="relative hidden aspect-square w-full shrink-0 overflow-hidden rounded-4xl md:flex md:max-h-[300px] md:max-w-[300px] xl:max-h-[520px] xl:max-w-[520px]">
             <Image
               src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=800&fit=crop"
               alt="Our team working together"
@@ -40,7 +38,7 @@ export function AboutFullSection({ className }: AboutFullSectionProps) {
             </div>
 
             {/* Mobile Image */}
-            <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-3xl md:hidden">
+            <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-4xl md:hidden">
               <Image
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=800&fit=crop"
                 alt="Our team working together"

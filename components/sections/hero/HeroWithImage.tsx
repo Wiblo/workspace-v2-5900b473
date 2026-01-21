@@ -1,104 +1,162 @@
-"use client"
-
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { businessInfo } from "@/lib/data/business-info"
+
+// =============================================================================
+// CONFIGURATION - Edit these variables to customize the hero
+// =============================================================================
+
+/** Hero height: "large" | "medium" | "small" */
+const size: "large" | "medium" | "small" = "large"
+
+/** Overlay opacity: 0-100 (percentage) */
+const overlayOpacity = 20
+
+/** Hero content - edit these values directly */
+const heroContent = {
+  subtitle: `Welcome to ${businessInfo.name}`,
+  title: "Experience Relief Through Expert Chiropractic Care",
+  backgroundImage: "/images/hero-background.jpg",
+  backgroundImageAlt: "Professional chiropractic treatment room with modern equipment",
+  ctaText: "Book Your Appointment",
+  ctaUrl: businessInfo.bookingUrl || "/contact",
+}
+
+// =============================================================================
+// SIZE CLASSES
+// =============================================================================
+
+const sizeClasses = {
+  large:
+    "flex mt-4 max-h-188 min-h-125 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-160 md:h-[calc(100vh-136px)] xl:h-[calc(110vh-136px)]",
+  medium:
+    "flex mt-4 max-h-140 min-h-100 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-120",
+  small:
+    "flex mt-4 max-h-100 min-h-80 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-80",
+}
+
+// =============================================================================
+// PROPS INTERFACE (for dynamic pages like service details)
+// =============================================================================
 
 export interface HeroWithImageProps {
-  /** Small text above the title */
+  /** Override subtitle text */
   subtitle?: string
-  /** Main headline */
-  title: string
-  /** Background image URL or path */
-  backgroundImage: string
-  /** Alt text for background image */
-  backgroundImageAlt: string
-  /** CTA button text */
+  /** Override main headline */
+  title?: string
+  /** Override background image URL */
+  backgroundImage?: string
+  /** Override alt text for background image */
+  backgroundImageAlt?: string
+  /** Override CTA button text */
   ctaText?: string
-  /** CTA button URL */
+  /** Override CTA button URL */
   ctaUrl?: string
-  /** Hero height variant */
+  /** Override hero size */
   size?: "large" | "medium" | "small"
+  /** Override overlay opacity (0-100) */
+  overlayOpacity?: number
   /** Additional CSS classes */
   className?: string
 }
 
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
 /**
- * Reusable hero section with full-width background image.
- * Use this for dynamic pages where content varies (e.g., service detail pages).
- * For static pages, prefer page-specific hero components with hardcoded content.
+ * Hero section with full-width background image.
+ *
+ * Configuration is done via variables at the top of this file.
+ * Props can override for dynamic pages (e.g., service detail pages).
+ *
+ * @example
+ * // Default usage (uses variables defined above)
+ * <HeroWithImage />
+ *
+ * @example
+ * // Override for dynamic page
+ * <HeroWithImage
+ *   title={service.name}
+ *   backgroundImage={service.image}
+ *   size="small"
+ * />
  */
-export function HeroWithImage({
-  subtitle,
-  title,
-  backgroundImage,
-  backgroundImageAlt,
-  ctaText,
-  ctaUrl,
-  size = "large",
-  className,
-}: HeroWithImageProps) {
-  const sizeClasses = {
-    large:
-      "flex mt-4 max-h-188 min-h-125 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-160 md:h-[calc(100vh-136px)] xl:h-[calc(110vh-136px)]",
-    medium:
-      "flex mt-4 max-h-140 min-h-100 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-120",
-    small:
-      "flex mt-4 max-h-100 min-h-80 max-w-7xl xl:max-w-none 2xl:px-48 flex-col items-center p-2 pt-0 md:min-h-80",
-  }
+export function HeroWithImage(props: HeroWithImageProps = {}) {
+  // Use props if provided, otherwise fall back to variables
+  const displaySubtitle = props.subtitle ?? heroContent.subtitle
+  const displayTitle = props.title ?? heroContent.title
+  const displayImage = props.backgroundImage ?? heroContent.backgroundImage
+  const displayImageAlt = props.backgroundImageAlt ?? heroContent.backgroundImageAlt
+  const displayCtaText = props.ctaText ?? heroContent.ctaText
+  const displayCtaUrl = props.ctaUrl ?? heroContent.ctaUrl
+  const displaySize = props.size ?? size
+  const displayOverlay = props.overlayOpacity ?? overlayOpacity
 
   return (
-    <section className={cn(sizeClasses[size], className)}>
+    <section className={cn(sizeClasses[displaySize], props.className)}>
       <div className="relative flex w-full flex-1 flex-col overflow-hidden rounded-4xl bg-black">
         {/* Background Image */}
         <div className="absolute h-full w-full overflow-hidden rounded-4xl">
           <Image
-            src={backgroundImage}
-            alt={backgroundImageAlt}
+            src={displayImage}
+            alt={displayImageAlt}
             fill
             className="object-cover object-center"
             priority
             sizes="100vw"
           />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/20" />
+          {/* Overlay - opacity controlled by variable/prop */}
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: `rgba(0, 0, 0, ${displayOverlay / 100})` }}
+          />
         </div>
 
         {/* Content */}
         <div className="relative flex h-full flex-1 flex-col justify-end gap-8 p-8 pt-52 lg:p-20 lg:pb-20">
           <div className="max-w-200 bg-transparent">
             <div className="flex flex-col gap-6 text-balance">
-              {subtitle && (
+              {/* Subtitle */}
+              {displaySubtitle && (
                 <span className="text-white">
                   <span className="border-l-4 border-primary pl-4 text-lg font-medium md:text-xl">
-                    {subtitle}
+                    {displaySubtitle}
                   </span>
                 </span>
               )}
 
+              {/* Headline */}
               <h1
                 className="font-heading text-3xl leading-tight text-white md:text-4xl lg:text-5xl"
                 style={{ fontWeight: 700 }}
               >
-                {title}
+                {displayTitle}
               </h1>
             </div>
           </div>
 
           {/* CTA Button */}
-          {ctaText && ctaUrl && (
+          {displayCtaText && displayCtaUrl && (
             <div className="flex">
               <Link
-                href={ctaUrl}
-                className="group relative flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-white transition-all ease-in-out hover:rounded-xl hover:bg-primary/90"
+                href={displayCtaUrl}
+                className="group relative flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-white transition-colors ease-in-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <span className="flex flex-1 items-center justify-center gap-x-2">
                   <span className="flex flex-row items-center gap-x-1">
-                    {ctaText}
+                    {displayCtaText}
                     <span className="relative inline-block h-4 w-4">
-                      <ChevronRight className="absolute left-0 top-0 h-4 w-4 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-0" />
-                      <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+                      <ChevronRight
+                        className="absolute left-0 top-0 h-4 w-4 transition-[transform,opacity] duration-200 group-hover:translate-x-1 group-hover:opacity-0"
+                        aria-hidden="true"
+                      />
+                      <ArrowRight
+                        className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                        aria-hidden="true"
+                      />
                     </span>
                   </span>
                 </span>

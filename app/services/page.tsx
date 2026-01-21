@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import { ServicesHero, ServicesGrid } from "@/components/sections"
+import { ServicesHero } from "@/components/sections/hero/ServicesHero"
+import { ServicesGrid } from "@/components/sections/services/ServicesGrid"
 import { businessInfo } from "@/lib/data/business-info"
 
 export const metadata: Metadata = {

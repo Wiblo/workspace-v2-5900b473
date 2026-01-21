@@ -1,5 +1,3 @@
-"use client"
-
 import Image from "next/image"
 import { Star } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -11,7 +9,7 @@ import {
   getTestimonialCount,
   type Testimonial,
 } from "@/lib/data/testimonials"
-import { businessInfo } from "@/lib/data/business-info"
+import { JsonLd, generateReviewSchema } from "@/lib/seo/json-ld"
 
 export interface TestimonialsSectionProps {
   /** Section title */
@@ -29,7 +27,7 @@ export interface TestimonialsSectionProps {
  */
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5" aria-hidden="true">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
@@ -72,42 +70,13 @@ export function TestimonialsSection({
   const avgRating = getAverageRating()
   const reviewCount = getTestimonialCount()
 
-  // Generate Review JSON-LD schema with AggregateRating
-  const reviewSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: businessInfo.name,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: avgRating.toFixed(1),
-      reviewCount: reviewCount,
-      bestRating: 5,
-      worstRating: 1,
-    },
-    review: testimonials.map((t) => ({
-      "@type": "Review",
-      author: {
-        "@type": "Person",
-        name: t.name,
-      },
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: t.rating,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      reviewBody: t.quote,
-      ...(t.date && { datePublished: t.date }),
-    })),
-  }
+  // Generate schema (returns null if no testimonials)
+  const reviewSchema = generateReviewSchema(testimonials)
 
   return (
     <SectionWrapper className={cn("bg-secondary/5", className)}>
-      {/* JSON-LD Schema - automatically included */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }}
-      />
+      {/* JSON-LD Schema */}
+      {reviewSchema && <JsonLd data={reviewSchema} />}
 
       <Container>
         {/* Section Header */}

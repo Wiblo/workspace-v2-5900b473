@@ -4,7 +4,7 @@ interface SectionWrapperProps {
   children: React.ReactNode
   className?: string
   /** HTML element to render. Defaults to 'section' */
-  as?: "section" | "div" | "article" | "aside"
+  as?: "section" | "div" | "article" | "main"
 }
 
 /**

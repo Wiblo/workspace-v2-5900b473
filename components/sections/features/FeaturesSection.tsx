@@ -65,7 +65,7 @@ export function FeaturesSection({ className }: FeaturesSectionProps) {
               )}
             >
               {/* Desktop Image */}
-              <div className="relative hidden aspect-square w-full shrink-0 overflow-hidden rounded-3xl md:flex md:max-h-[300px] md:max-w-[300px] xl:max-h-[520px] xl:max-w-[520px]">
+              <div className="relative hidden aspect-square w-full shrink-0 overflow-hidden rounded-4xl md:flex md:max-h-[300px] md:max-w-[300px] xl:max-h-[520px] xl:max-w-[520px]">
                 <Image
                   src={block.image}
                   alt={block.imageAlt}
@@ -85,7 +85,7 @@ export function FeaturesSection({ className }: FeaturesSectionProps) {
                 </div>
 
                 {/* Mobile Image */}
-                <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-3xl md:hidden">
+                <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-4xl md:hidden">
                   <Image
                     src={block.image}
                     alt={block.imageAlt}

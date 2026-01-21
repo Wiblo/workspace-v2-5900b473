@@ -7,6 +7,7 @@ import { Container } from "@/components/layout/Container"
 import { SectionWrapper } from "@/components/layout/SectionWrapper"
 import { faqs as defaultFaqs, type FAQ } from "@/lib/data/faqs"
 import { businessInfo } from "@/lib/data/business-info"
+import { JsonLd, generateFAQSchema } from "@/lib/seo/json-ld"
 
 export interface FAQSectionProps {
   /** Section title */
@@ -59,27 +60,10 @@ export function FAQSection({
     setOpenItems(newOpenItems)
   }
 
-  // Generate FAQ Page JSON-LD schema
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  }
-
   return (
     <SectionWrapper className={cn("bg-background", className)}>
-      {/* JSON-LD Schema - automatically included */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      {/* JSON-LD Schema */}
+      <JsonLd data={generateFAQSchema(faqs)} />
 
       <Container>
         <div className="mx-auto max-w-4xl">
@@ -104,7 +88,7 @@ export function FAQSection({
                 <div key={item.id} className="group">
                   <button
                     onClick={() => toggleItem(item.id)}
-                    className="flex w-full items-center justify-between py-6 text-left transition-colors hover:text-primary"
+                    className="flex w-full items-center justify-between py-6 text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${item.id}`}
                   >
@@ -113,9 +97,10 @@ export function FAQSection({
                     </span>
                     <div
                       className={cn(
-                        "ml-4 flex-shrink-0 transition-all duration-200",
+                        "ml-4 flex-shrink-0 transition-[transform,color] duration-200",
                         isOpen ? "rotate-180 text-primary" : "text-muted-foreground"
                       )}
+                      aria-hidden="true"
                     >
                       <ChevronDown className="h-5 w-5" />
                     </div>
@@ -123,7 +108,7 @@ export function FAQSection({
 
                   <div
                     className={cn(
-                      "overflow-hidden transition-all duration-300 ease-in-out",
+                      "overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out",
                       isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                     )}
                     id={`faq-answer-${item.id}`}
@@ -151,13 +136,13 @@ export function FAQSection({
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <a
                   href={`tel:${businessInfo.phone.replace(/[^0-9+]/g, "")}`}
-                  className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Call Us: {businessInfo.phone}
                 </a>
                 <a
                   href={`mailto:${businessInfo.email}`}
-                  className="inline-flex items-center justify-center rounded-lg border border-primary px-6 py-3 font-medium text-primary transition-colors hover:bg-secondary/20"
+                  className="inline-flex items-center justify-center rounded-lg border border-primary px-6 py-3 font-medium text-primary transition-colors hover:bg-secondary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Email Us
                 </a>

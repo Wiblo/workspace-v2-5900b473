@@ -53,10 +53,10 @@ export function AboutPreview({ className }: AboutPreviewProps) {
               {/* Link to About Page */}
               <Link
                 href="/about"
-                className="inline-flex items-center gap-2 text-base font-medium text-primary transition-colors hover:text-primary/80"
+                className="inline-flex items-center gap-2 text-base font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Learn More About Us
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

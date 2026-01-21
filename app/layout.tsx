@@ -1,9 +1,9 @@
-import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Navbar } from "@/components/layout/Navbar"
 import { Footer } from "@/components/layout/Footer"
-import { businessInfo } from "@/lib/data/business-info"
+import { JsonLd, generateLocalBusinessSchema } from "@/lib/seo/json-ld"
+import { generateRootMetadata } from "@/lib/seo/metadata"
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -14,76 +14,29 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 })
 
-export const metadata: Metadata = {
-  title: {
-    default: `${businessInfo.name} | ${businessInfo.tagline}`,
-    template: `%s | ${businessInfo.name}`,
-  },
-  description: businessInfo.description,
-  metadataBase: new URL(businessInfo.url),
-  openGraph: {
-    title: businessInfo.name,
-    description: businessInfo.description,
-    url: businessInfo.url,
-    siteName: businessInfo.name,
-    type: "website",
-  },
-}
+export const metadata = generateRootMetadata()
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // LocalBusiness JSON-LD schema - appears on every page
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: businessInfo.name,
-    description: businessInfo.description,
-    telephone: businessInfo.phone,
-    email: businessInfo.email,
-    url: businessInfo.url,
-    image: businessInfo.logo,
-    priceRange: businessInfo.priceRange,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: businessInfo.address.street,
-      addressLocality: businessInfo.address.city,
-      addressRegion: businessInfo.address.state,
-      postalCode: businessInfo.address.zip,
-      addressCountry: businessInfo.address.country,
-    },
-    ...(businessInfo.geo.latitude && businessInfo.geo.longitude
-      ? {
-          geo: {
-            "@type": "GeoCoordinates",
-            latitude: businessInfo.geo.latitude,
-            longitude: businessInfo.geo.longitude,
-          },
-        }
-      : {}),
-    openingHoursSpecification: Object.entries(businessInfo.hours)
-      .filter(([, hours]) => hours.toLowerCase() !== "closed")
-      .map(([day, hours]) => ({
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: day.charAt(0).toUpperCase() + day.slice(1),
-        opens: hours.split(" - ")[0],
-        closes: hours.split(" - ")[1],
-      })),
-  }
-
   return (
     <html lang="en" className={geistSans.className}>
       <body className={`${geistMono.variable} antialiased`}>
+        {/* Skip link for keyboard navigation */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        >
+          Skip to main content
+        </a>
+
         {/* LocalBusiness JSON-LD for SEO */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
+        <JsonLd data={generateLocalBusinessSchema()} />
 
         <Navbar />
-        <main>{children}</main>
+        <main id="main-content">{children}</main>
         <Footer />
       </body>
     </html>
