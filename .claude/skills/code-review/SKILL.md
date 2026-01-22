@@ -106,7 +106,7 @@ For guideline issues: verify the rule actually applies to this code.
 
 ### Step 5: Filter and Format Results
 
-Filter out issues with score < 80.
+Filter out issues with score < 75.
 
 Format the summary as:
 
