@@ -123,6 +123,7 @@ Subagent: About page ───────┘
   - The brand colors and style to follow
   - **Any user-provided examples** (image paths, code snippets, design references)
   - **Specific requirements** the user mentioned for that page/component
+  - **If duplicating a component** (e.g., using the same section type with different content), explicitly tell the subagent to duplicate the component file and customize it
 
 **When NOT to use subagents:**
 - Sequential tasks (one depends on another)
@@ -155,11 +156,17 @@ When the user's prompt contains `<new-project>` tags, follow this workflow:
    - Which pages need custom components (requiring `/frontend-design`)
    - Any special features requested
 
-### Phase 2: Brand & Page Implementation (Parallel - Subagents)
+### Phase 2: Brand, Layout & Page Implementation (Parallel - Subagents)
 
-Spawn subagents in parallel. The main agent must tell each subagent:
+Spawn subagents in parallel. **Start with brand and root layout**, then pages can follow:
+- **Root layout subagent**: Customize Navbar and Footer in `app/layout.tsx` (uncomment and adapt)
+- **Brand subagent**: Run `/brand-setup` to establish colors and typography
+- **Page subagents**: Build individual pages once layout is ready
+
+The main agent must tell each subagent:
 - **Which existing components to use** (e.g., "Use HeroWithImage, ServicesGrid, TestimonialsCarousel")
 - **Whether to create custom components** (e.g., "Create a custom pricing table using /frontend-design")
+- **Whether to duplicate a component** (e.g., "Duplicate CTASection as CTAContact with different content")
 - **Brand direction** (until brand-guide.md exists)
 - **User-provided examples** (include image paths, code snippets, or design references verbatim)
 - **Specific requirements** mentioned by the user for that page
@@ -167,9 +174,11 @@ Spawn subagents in parallel. The main agent must tell each subagent:
 **Example parallel execution:**
 ```
 Subagent: "Run /brand-setup skill" ──────────────┐
-Subagent: "Build home page using HeroWithImage,  │
-           ServicesGrid, CTASimple" ─────────────┼── Parallel
-Subagent: "Build about page using AboutWithTeam, │
+Subagent: "Customize root layout - uncomment     │
+           Navbar and Footer, adapt to brand" ───┼── Parallel (do first)
+Subagent: "Build home page using HeroSection,    │
+           FeaturedServices, CTASection" ────────┼── Parallel (after layout)
+Subagent: "Build about page using AboutFullSection,
            create custom timeline with           │
            /frontend-design" ────────────────────┘
 ```
@@ -212,6 +221,54 @@ The project is NOT complete until `bun run build` passes.
 **Purpose**: Production-ready Next.js template for local service business websites (chiropractors, dentists, etc.) optimized for perfect Lighthouse scores (100/100/100/100), excellent SEO, and maintainability.
 
 **Stack**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui (New York style), Bun
+
+### Template Philosophy
+
+This template contains **many useful pre-built components** that are SEO-optimized, fast, and designed for small service businesses. The template sections are **commented out in pages** so they can be adapted to each business before being displayed.
+
+**Why components are commented out:**
+- Each section needs to be customized with the client's business content and brand
+- Showing generic placeholder content looks unprofessional
+- Adapting first ensures the site looks polished from the start
+
+**Most small businesses want something very close to the commented structure** - the typical home page, about page, and services page patterns work well for 90% of local service businesses. Some may want 1-2 extra sections.
+
+### Typical Home Page Structure
+
+This structure works well for most local service businesses:
+
+```tsx
+// app/page.tsx - Typical implementation
+import { HeroSection } from "@/components/sections/hero/HeroSection"
+import { FeaturedServices } from "@/components/sections/services/FeaturedServices"
+import { AboutPreview } from "@/components/sections/about/AboutPreview"
+import { FeaturesSection } from "@/components/sections/features/FeaturesSection"
+import { CTASection } from "@/components/sections/cta/CTASection"
+import { LocationSection } from "@/components/sections/location/LocationSection"
+import { FAQSection } from "@/components/sections/faq/FAQSection"
+
+export default function HomePage() {
+  return (
+    <>
+      <HeroSection />        {/* Main value prop + CTA */}
+      <FeaturedServices />   {/* 3-4 key services */}
+      <AboutPreview />       {/* Brief intro + link to about page */}
+      <FeaturesSection />    {/* Why choose us / benefits */}
+      <CTASection />         {/* Book appointment / contact CTA */}
+      <LocationSection />    {/* Address, hours, map */}
+      <FAQSection />         {/* Common questions */}
+    </>
+  )
+}
+```
+
+### Meeting User Requirements
+
+Users often provide minimal information. When details are missing:
+- **Do what's best for a local service business website** - use industry best practices
+- **Make sensible assumptions** based on similar businesses
+- **Use the template structure** as a starting point - it's designed for this use case
+- **Ask questions AFTER the build passes**, not before
 
 ## Development Commands
 
