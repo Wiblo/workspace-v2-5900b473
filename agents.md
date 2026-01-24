@@ -273,7 +273,7 @@ FAQs: [common questions and answers]
 ## Agent Coordination
 
 ### Execution Order
-1. **Planning Agent** runs first (needs user input only)
+1. **Planning Agent** runs first
 2. **Brand Agent** runs second (needs business type from planning)
 3. **Implementation Agent** runs third (needs plan + brand)
 4. **Image Agent** runs fourth (needs implementation context)
