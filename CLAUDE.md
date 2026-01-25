@@ -176,6 +176,7 @@ The main agent must tell each subagent:
 Subagent: "Run /brand-setup skill" ──────────────┐
 Subagent: "Customize root layout - uncomment     │
            Navbar and Footer, adapt to brand" ───┼── Parallel (do first)
+Subagent: "Run /metadata-files skill" ───────────┤
 Subagent: "Build home page using HeroSection,    │
            FeaturedServices, CTASection" ────────┼── Parallel (after layout)
 Subagent: "Build about page using AboutFullSection,
@@ -192,11 +193,14 @@ Subagent: "Build about page using AboutFullSection,
 
 For blog/content pages, subagents use `/mdx-content` skill.
 
-### Phase 3: Metadata & Review (Parallel - Subagents)
+### Phase 3: Code Review (After Pages Complete)
 
-1. Subagent runs `/metadata-files` skill for SEO assets
-2. Subagent runs `/code-review` skill for quality checks
-3. Each subagent runs `bun check` when done
+Once all page subagents have finished:
+1. Run `/code-review` skill for quality checks
+2. Fix any issues identified
+3. Run `bun check` to verify
+
+**Note:** The `/metadata-files` skill runs **in parallel with page implementation** (Phase 2), not after. SEO assets can be generated while pages are being built.
 
 ### Phase 4: Final Validation (Main Agent)
 

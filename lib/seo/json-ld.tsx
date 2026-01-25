@@ -179,7 +179,7 @@ export function generateReviewSchema(testimonials: Testimonial[]) {
         bestRating: 5,
         worstRating: 1,
       },
-      reviewBody: t.quote,
+      reviewBody: t.text,
       ...(t.date ? { datePublished: t.date } : {}),
     })),
   }

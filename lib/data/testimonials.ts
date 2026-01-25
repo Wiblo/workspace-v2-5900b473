@@ -7,18 +7,34 @@
  */
 
 export interface Testimonial {
+  /** Unique identifier */
+  id: string
   /** Customer's name */
   name: string
   /** The testimonial text/quote */
-  quote: string
+  text: string
   /** Rating out of 5 (e.g., 5, 4.5, 4) */
   rating: number
   /** Optional: customer's role, title, or location */
   role?: string
   /** Optional: customer's photo URL */
-  image?: string
-  /** Optional: date of the review (ISO format: "2024-01-15") */
+  avatar?: string
+  /** Optional: date of the review */
   date?: string
+  /** Optional: source of the review */
+  source?: "google" | "facebook" | "yelp" | "website"
+  /** Optional: whether this is a verified Google review */
+  isGoogleVerified?: boolean
+}
+
+/** Google Business rating info */
+export interface GoogleRating {
+  /** Average rating (e.g., 4.8) */
+  average: number
+  /** Total number of reviews */
+  count: number
+  /** URL to Google Business page */
+  url: string
 }
 
 /**
@@ -33,34 +49,61 @@ export interface Testimonial {
  */
 export const testimonials: Testimonial[] = [
   {
-    name: "Customer Name One",
-    quote:
-      "Share what the customer said about your business. Include specific details about their experience and the results they achieved.",
+    id: "1",
+    name: "Sarah M.",
+    text: "Excellent service from start to finish. The staff was professional and friendly, and I saw real results after just a few sessions. Highly recommend to anyone looking for quality care.",
     rating: 5,
-    role: "Customer",
+    source: "google",
+    isGoogleVerified: true,
+    date: "2 weeks ago",
   },
   {
-    name: "Customer Name Two",
-    quote:
-      "Another customer testimonial goes here. Highlight different aspects of your service to show variety in what customers appreciate.",
+    id: "2",
+    name: "James P.",
+    text: "I've been coming here for months now and the improvement in my condition has been remarkable. The team really takes the time to understand your needs and create a personalized treatment plan.",
     rating: 5,
-    role: "Customer",
+    source: "google",
+    isGoogleVerified: true,
+    date: "1 month ago",
   },
   {
-    name: "Customer Name Three",
-    quote:
-      "A third testimonial that emphasizes a unique benefit or experience. Testimonials build trust and help potential customers make decisions.",
+    id: "3",
+    name: "Michelle K.",
+    text: "After trying several other places, I finally found a practice that actually listens. They explained everything clearly and I felt comfortable throughout the entire process.",
     rating: 5,
-    role: "Customer",
+    source: "google",
+    isGoogleVerified: true,
+    date: "1 month ago",
   },
   {
-    name: "Customer Name Four",
-    quote:
-      "Include testimonials that address common concerns or highlight exceptional service. Real stories resonate with potential customers.",
+    id: "4",
+    name: "David R.",
+    text: "Great experience overall. The facility is clean and modern, appointments run on time, and the results speak for themselves. Will definitely continue my treatment here.",
+    rating: 5,
+    source: "google",
+    isGoogleVerified: true,
+    date: "2 months ago",
+  },
+  {
+    id: "5",
+    name: "Lisa T.",
+    text: "Very impressed with the level of care and attention. They genuinely care about their patients and it shows in everything they do.",
     rating: 4,
-    role: "Customer",
+    source: "google",
+    isGoogleVerified: true,
+    date: "3 months ago",
   },
 ]
+
+/**
+ * Google Business rating info.
+ * Update this with your actual Google Business data.
+ */
+export const googleRating: GoogleRating = {
+  average: 4.8,
+  count: 127,
+  url: "https://g.page/r/your-google-business-url",
+}
 
 // ============================================================================
 // Helper Functions
@@ -78,6 +121,13 @@ export function getAllTestimonials(): Testimonial[] {
  */
 export function getTestimonialsPreview(count: number = 3): Testimonial[] {
   return testimonials.slice(0, count)
+}
+
+/**
+ * Get only Google-verified reviews.
+ */
+export function getGoogleReviews(): Testimonial[] {
+  return testimonials.filter((t) => t.source === "google" || t.isGoogleVerified)
 }
 
 /**

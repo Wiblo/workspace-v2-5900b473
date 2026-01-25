@@ -351,11 +351,58 @@ Links are automatically handled:
 - `/path` - Internal link via Next.js Link
 - `https://...` - External link with `target="_blank"`
 
+## BlogPostLayout (Recommended for Blogs)
+
+For blog content, it's often nice to create a `BlogPostLayout` component that wraps all posts. This provides a polished, consistent experience with elements like breadcrumbs, author info, reading time, and related content.
+
+**Auto-calculate reading time** instead of hardcoding:
+
+```tsx
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const words = content.trim().split(/\s+/).length
+  return Math.ceil(words / wordsPerMinute)
+}
+```
+
+## Table of Contents (For Informational Articles)
+
+For medical/educational content, add a **TableOfContents** component that extracts h2 headings:
+
+**Horizontal variant** (sticky bar at top):
+```
+Contents ↓ | Overview | Possible Causes | Care and Treatment | When To Call
+```
+
+**Sidebar variant** (for longer guides):
+- Vertical list in the sidebar
+- Highlights current section on scroll
+
+Auto-generate from headings with `[#anchor]` syntax.
+
+## Brand Integration
+
+Before creating blog components:
+1. Read `docs/brand-guide.md` for colors and typography
+2. Use design tokens: `primary`, `muted`, `background`, etc.
+3. Match button and link styles from existing sections
+4. Adapt the layout to feel consistent with the rest of the site
+
+## Custom MDX Components
+
+Create business-specific MDX components where they add value:
+
+```mdx
+<BookingCTA />           {/* Inline appointment button */}
+<ServiceCard slug="sports-injury" />  {/* Link to a service */}
+<InsuranceNote />        {/* Standard insurance disclaimer */}
+```
+
 ## Industry-Specific Content Ideas
 
-### Chiropractor
-- **Conditions**: Back Pain, Sciatica, Neck Pain, Headaches, Scoliosis
-- **Treatments**: Spinal Adjustment, Decompression, Sports Therapy
+### Chiropractor / Physiotherapist
+- **Conditions**: Back Pain, Sciatica, Neck Pain, Headaches, Sports Injuries
+- **Treatments**: Spinal Adjustment, Dry Needling, Sports Therapy
 - **Blog**: Wellness tips, posture guides, exercise routines
 
 ### Dentist
@@ -367,3 +414,4 @@ Links are automatically handled:
 - Use conditions/treatments pages to rank for symptom searches
 - Use blog for educational content and local SEO
 - Each page should have Schema.org markup (MedicalCondition, MedicalProcedure)
+- Informational articles benefit from table of contents navigation
