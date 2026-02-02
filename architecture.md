@@ -43,7 +43,7 @@ service-template/
 │   └── robots.ts                  # Robots.txt
 │
 ├── components/
-│   ├── ui/                        # shadcn/ui primitives (DO NOT EDIT)
+│   ├── ui/                        # shadcn/ui primitives 
 │   │
 │   ├── layout/                    # Layout utilities
 │   │   ├── Container.tsx          # Max-width wrapper (horizontal padding)
@@ -80,7 +80,7 @@ service-template/
 │   │   ├── business-info.ts       # Central business data
 │   │   ├── services.ts            # Services with getServiceBySlug()
 │   │   ├── navigation.ts          # Nav links
-│   │   ├── features.ts            # Features/benefits
+│   │ 
 │   │   ├── testimonials.ts        # Customer reviews
 │   │   └── faqs.ts                # FAQ items
 │   └── seo/
@@ -394,223 +394,50 @@ export default async function ServicePage({
 
 ## SEO Implementation
 
-### JSON-LD Strategy
+### Approach: Inline JSON-LD
 
-JSON-LD schemas are placed at two levels:
-
-| Schema Type | Location | Reason |
-|-------------|----------|--------|
-| `LocalBusiness` | Root layout | Business identity - appears on every page |
-| `FAQPage` | FAQSection component | Only relevant when FAQs displayed |
-| `Review` | TestimonialsSection component | Only relevant when reviews displayed |
-| `Service` | Service detail page | Only relevant on /services/[slug] |
-| `BreadcrumbList` | Pages with breadcrumbs | Page-specific navigation |
-
-**Key principle**: Content-specific schemas live in the component that renders that content. This ensures:
-- Can't forget JSON-LD - it's part of the component
-- Data stays in sync - same source for UI and schema
-- Self-documenting - schema lives where it's used
-
-### Site-Wide Schema (Root Layout)
-
-LocalBusiness schema appears on every page:
+Keep it simple - add JSON-LD directly in pages that need it:
 
 ```tsx
-// app/layout.tsx
+// app/page.tsx
 import { businessInfo } from "@/lib/data/business-info"
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: businessInfo.name,
-    description: businessInfo.description,
-    telephone: businessInfo.phone,
-    email: businessInfo.email,
-    url: businessInfo.url,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: businessInfo.address.street,
-      addressLocality: businessInfo.address.city,
-      addressRegion: businessInfo.address.state,
-      postalCode: businessInfo.address.zip,
-      addressCountry: businessInfo.address.country,
-    },
-    geo: businessInfo.geo.latitude ? {
-      "@type": "GeoCoordinates",
-      latitude: businessInfo.geo.latitude,
-      longitude: businessInfo.geo.longitude,
-    } : undefined,
-    openingHoursSpecification: Object.entries(businessInfo.hours)
-      .filter(([_, hours]) => hours !== "Closed")
-      .map(([day, hours]) => ({
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: day.charAt(0).toUpperCase() + day.slice(1),
-        opens: hours.split(" - ")[0],
-        closes: hours.split(" - ")[1],
-      })),
-  }
-
-  return (
-    <html lang="en">
-      <body>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-      </body>
-    </html>
-  )
-}
-```
-
-### Section-Level Schemas
-
-Sections that have associated schemas include them automatically:
-
-```tsx
-// components/sections/faq/FAQSection.tsx
-import { faqs } from "@/lib/data/faqs"
-
-export function FAQSection() {
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  }
-
+export default function HomePage() {
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: businessInfo.name,
+            description: businessInfo.description,
+            telephone: businessInfo.phone,
+            email: businessInfo.email,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: businessInfo.address.street,
+              addressLocality: businessInfo.address.city,
+              addressRegion: businessInfo.address.state,
+              postalCode: businessInfo.address.zip,
+              addressCountry: businessInfo.address.country,
+            },
+            url: businessInfo.url,
+          }),
+        }}
       />
-      <SectionWrapper>
-        <Container>
-          <Accordion>
-            {faqs.map((faq) => (
-              <AccordionItem key={faq.question} {...faq} />
-            ))}
-          </Accordion>
-        </Container>
-      </SectionWrapper>
+      {/* Page content */}
     </>
   )
 }
 ```
 
-```tsx
-// components/sections/testimonials/TestimonialsSection.tsx
-import { testimonials } from "@/lib/data/testimonials"
-
-export function TestimonialsSection() {
-  const reviewSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: businessInfo.name,
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: (testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length).toFixed(1),
-      reviewCount: testimonials.length,
-      bestRating: 5,
-      worstRating: 1,
-    },
-    review: testimonials.map((t) => ({
-      "@type": "Review",
-      author: { "@type": "Person", name: t.name },
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: t.rating,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      reviewBody: t.quote,
-    })),
-  }
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }}
-      />
-      <SectionWrapper>
-        <Container>
-          {/* Testimonials UI */}
-        </Container>
-      </SectionWrapper>
-    </>
-  )
-}
-```
-
-### Page-Level Schemas
-
-Service detail pages include Service schema:
-
-```tsx
-// app/services/[slug]/page.tsx
-import { getServiceBySlug } from "@/lib/data/services"
-import { businessInfo } from "@/lib/data/business-info"
-
-export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const service = getServiceBySlug(slug)
-  if (!service) notFound()
-
-  const serviceSchema = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.name,
-    description: service.description,
-    provider: {
-      "@type": "LocalBusiness",
-      name: businessInfo.name,
-      url: businessInfo.url,
-    },
-    areaServed: {
-      "@type": "City",
-      name: businessInfo.address.city,
-    },
-  }
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
-      />
-      <article>
-        <h1>{service.name}</h1>
-        <p>{service.description}</p>
-      </article>
-    </>
-  )
-}
-```
-
-### Sections WITHOUT Schemas
-
-These sections don't need their own schema (covered by LocalBusiness or not applicable):
-
-| Section | Why No Schema |
-|---------|---------------|
-| `LocationSection` | Covered by LocalBusiness in root layout |
-| `HeroSection` | No specific schema type |
-| `FeaturesSection` | No specific schema type |
-| `CTASection` | No specific schema type |
-| `GallerySection` | No specific schema type |
-| `AboutSection` | No specific schema type |
+**Why inline instead of centralized generators:**
+- AI can generate exactly what each page needs
+- No abstraction layer to learn
+- Easier to understand and modify
+- Can extract to helpers later if patterns emerge
 
 ### Metadata Helper
 
@@ -666,20 +493,7 @@ export const metadata = generatePageMetadata(
 
 ## Sections Library
 
-Ship these sections with placeholder content. AI edits them to match the business.
-
-### Sections WITH Built-in JSON-LD
-
-These sections automatically include their schema - use them and SEO is handled:
-
-| Section | File | Schema | Data Source |
-|---------|------|--------|-------------|
-| **FAQSection** | `faq/FAQSection.tsx` | `FAQPage` | `lib/data/faqs.ts` |
-| **TestimonialsSection** | `testimonials/TestimonialsSection.tsx` | `Review` + `AggregateRating` | `lib/data/testimonials.ts` |
-
-### Sections WITHOUT JSON-LD
-
-These sections don't need schemas (either no applicable schema or covered by LocalBusiness in layout):
+Ship these sections with placeholder content. AI edits them to match the business:
 
 | Section | File | Purpose |
 |---------|------|---------|
@@ -690,18 +504,11 @@ These sections don't need schemas (either no applicable schema or covered by Loc
 | **ServiceCard** | `services/ServiceCard.tsx` | Reusable service card |
 | **AboutSection** | `about/AboutSection.tsx` | About the business |
 | **FeaturesSection** | `features/FeaturesSection.tsx` | Benefits/features grid |
+| **TestimonialsSection** | `testimonials/TestimonialsSection.tsx` | Customer reviews |
 | **CTASection** | `cta/CTASection.tsx` | Call-to-action block |
-| **LocationSection** | `location/LocationSection.tsx` | Map + address (covered by LocalBusiness) |
+| **FAQSection** | `faq/FAQSection.tsx` | Accordion FAQ |
+| **LocationSection** | `location/LocationSection.tsx` | Map + address |
 | **GallerySection** | `gallery/GallerySection.tsx` | Image gallery |
-
-### Page-Level Schemas
-
-These schemas are added directly in page files, not sections:
-
-| Schema | Page | When to Add |
-|--------|------|-------------|
-| `Service` | `app/services/[slug]/page.tsx` | Always on service detail pages |
-| `BreadcrumbList` | Any page with breadcrumbs | When breadcrumb navigation exists |
 
 ---
 
