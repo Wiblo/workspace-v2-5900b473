@@ -32,18 +32,18 @@ Create a Claude Code skill for AI-powered image generation using TypeScript scri
 ```yaml
 ---
 name: image-gen
-description: Generate and edit images using AI (Gemini, OpenAI, Flux) via Vercel AI Gateway. Use for app icons, hero images, profile avatars, creative OG images, and batch generation. Supports text-to-image, image editing, and style presets.
+description: Generate and edit images using Gemini via Vercel AI Gateway. Use for app icons, hero images, profile avatars, creative OG images, and batch generation. Supports text-to-image, image editing, and style presets.
 ---
 
 # Image Generation
 
-Generate and edit images using AI models via Vercel AI Gateway.
+Generate and edit images using Gemini via Vercel AI Gateway.
 
 ## Usage
 
 ### Single Image
 ```bash
-npx tsx ~/.claude/skills/image-gen/scripts/generate.ts \
+bun ~/.claude/skills/image-gen/scripts/generate.ts \
   --prompt "A serene Japanese garden with cherry blossoms" \
   --output garden.png \
   --model gemini-3-pro \
@@ -53,15 +53,22 @@ npx tsx ~/.claude/skills/image-gen/scripts/generate.ts \
 
 ### Batch Generation
 ```bash
-npx tsx ~/.claude/skills/image-gen/scripts/batch.ts \
+bun ~/.claude/skills/image-gen/scripts/batch.ts \
   --input prompts.json \
-  --output-dir ./images/ \
+  --output-dir ./public/images/batch-hero/ \
   --parallel 5
+```
+
+```bash
+# Example batch with reference images (see examples file)
+bun ~/.claude/skills/image-gen/scripts/batch.ts \
+  --input ~/.claude/skills/image-gen/examples/batch-prompts.json \
+  --output-dir ./public/images/batch-example/
 ```
 
 ### Image Editing
 ```bash
-npx tsx ~/.claude/skills/image-gen/scripts/edit.ts \
+bun ~/.claude/skills/image-gen/scripts/edit.ts \
   --input photo.jpg \
   --prompt "Add dramatic storm clouds" \
   --output dramatic.png
@@ -71,15 +78,21 @@ npx tsx ~/.claude/skills/image-gen/scripts/edit.ts \
 
 | Parameter | Values | Default |
 |-----------|--------|---------|
-| `--model` | gemini-3-pro, gemini-flash, gpt-image, flux-2-pro | gemini-3-pro |
+| `--model` | gemini-3-pro, gemini-flash | gemini-3-pro |
 | `--resolution` | 1K, 2K, 4K | 2K |
 | `--aspect-ratio` | square, portrait, landscape, wide, 4:3, 3:2 | square |
 | `--style` | minimalism, glassy, neon, geometric, flat, etc. | none |
-| `--output` | filename.png | generated-{timestamp}.png |
+| `--output` | filename.png | public/images/generated-{timestamp}.png |
+
+Defaults:
+- `generate.ts` outputs to `public/images/generated-{timestamp}.png`
+- `edit.ts` outputs to `public/images/edited-{timestamp}.png`
+- `batch.ts` outputs to `public/images/batch-{timestamp}/` (folder created automatically)
 
 ## Environment
 
 Requires `AI_GATEWAY_API_KEY` environment variable.
+The scripts auto-load `.env`, `.env.local`, `.env.development`, and `.env.development.local` from the current working directory.
 
 ## Reference Templates
 
@@ -92,19 +105,19 @@ Read `references/styles/style-presets.md` for available style presets.
 ### 1. generate.ts (Single Image)
 
 ```typescript
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 /**
  * Single image generation via Vercel AI Gateway
  *
  * Usage:
- *   npx tsx generate.ts --prompt "description" --output image.png
+ *   bun generate.ts --prompt "description" --output image.png
  */
 
 import { generateText } from 'ai';
 import { createGateway } from '@ai-sdk/gateway';
-import { parseArgs } from 'util';
-import { writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
+import { parseArgs } from 'node:util';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
 
 const ASPECT_RATIOS = {
   square: '1:1',
@@ -120,15 +133,13 @@ const ASPECT_RATIOS = {
 const MODELS = {
   'gemini-3-pro': 'google/gemini-3-pro-image',
   'gemini-flash': 'google/gemini-2.5-flash-image',
-  'gpt-image': 'openai/gpt-image-1.5',
-  'flux-2-pro': 'bfl/flux-2-pro',
 } as const;
 
 async function main() {
   const { values } = parseArgs({
     options: {
       prompt: { type: 'string', short: 'p' },
-      output: { type: 'string', short: 'o', default: `generated-${Date.now()}.png` },
+      output: { type: 'string', short: 'o', default: `public/images/generated-${Date.now()}.png` },
       model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
       resolution: { type: 'string', short: 'r', default: '2K' },
       'aspect-ratio': { type: 'string', short: 'a', default: 'square' },
@@ -194,19 +205,19 @@ main().catch(console.error);
 ### 2. batch.ts (Batch Generation)
 
 ```typescript
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 /**
  * Batch image generation from JSON/CSV
  *
  * Usage:
- *   npx tsx batch.ts --input prompts.json --output-dir ./images/
+ *   bun batch.ts --input prompts.json --output-dir ./public/images/batch-hero/
  */
 
 import { generateText } from 'ai';
 import { createGateway } from '@ai-sdk/gateway';
-import { parseArgs } from 'util';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join, extname, basename } from 'path';
+import { parseArgs } from 'node:util';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join, extname, basename } from 'node:path';
 import { parse as parseCSV } from 'csv-parse/sync';
 
 interface BatchPrompt {
@@ -222,7 +233,7 @@ async function main() {
   const { values } = parseArgs({
     options: {
       input: { type: 'string', short: 'i' },
-      'output-dir': { type: 'string', short: 'o', default: './generated' },
+      'output-dir': { type: 'string', short: 'o', default: `public/images/batch-${Date.now()}` },
       parallel: { type: 'string', short: 'p', default: '3' },
       model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
     },
@@ -300,26 +311,26 @@ main().catch(console.error);
 ### 3. edit.ts (Image Editing)
 
 ```typescript
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 /**
  * Image editing with reference images
  *
  * Usage:
- *   npx tsx edit.ts --input photo.jpg --prompt "Add storm clouds" --output edited.png
+ *   bun edit.ts --input photo.jpg --prompt "Add storm clouds" --output edited.png
  */
 
 import { generateText } from 'ai';
 import { createGateway } from '@ai-sdk/gateway';
-import { parseArgs } from 'util';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
+import { parseArgs } from 'node:util';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
 
 async function main() {
   const { values } = parseArgs({
     options: {
       input: { type: 'string', short: 'i', multiple: true },
       prompt: { type: 'string', short: 'p' },
-      output: { type: 'string', short: 'o', default: `edited-${Date.now()}.png` },
+      output: { type: 'string', short: 'o', default: `public/images/edited-${Date.now()}.png` },
       model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
       resolution: { type: 'string', short: 'r' }, // Auto-detect from input if not set
     },
@@ -777,7 +788,7 @@ Iridescent, color-shifting, light-reactive, prismatic effects.
 
 **CLI:**
 ```bash
-npx tsx generate.ts --prompt "App icon for music app" --style neon
+bun generate.ts --prompt "App icon for music app" --style neon
 ```
 
 **Batch JSON:**
@@ -863,7 +874,7 @@ construct a batch like this:
 
 If user provides a reference image, use edit.ts with the angle description:
 ```bash
-npx tsx edit.ts --input lamp-photo.jpg --prompt "Show this from a top-down view" --output lamp-above.png
+bun edit.ts --input lamp-photo.jpg --prompt "Show this from a top-down view" --output lamp-above.png
 ```
 ```
 
@@ -945,12 +956,12 @@ const VARIATION_TYPES = {
 Search for input images in multiple common locations:
 ```typescript
 const SEARCH_PATHS = [
-  process.cwd(),
-  './images/',
-  './input/',
-  './public/images/',
-  '~/Downloads/',
-  '~/Desktop/',
+  '',
+  'public/images/',
+  'public/uploads/',
+  'images/',
+  'assets/',
+  'input/',
 ];
 ```
 
@@ -999,8 +1010,6 @@ Check multiple locations for image data in API responses:
     "@ai-sdk/gateway": "^1.0.0"
   },
   "devDependencies": {
-    "tsx": "^4.0.0",
-    "csv-parse": "^5.0.0",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   }
@@ -1012,6 +1021,8 @@ Check multiple locations for image data in API responses:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `AI_GATEWAY_API_KEY` | Vercel AI Gateway API key | Yes |
+
+The scripts auto-load `.env`, `.env.local`, `.env.development`, and `.env.development.local` from the current working directory.
 
 ## Usage in Wiblo Workflow
 

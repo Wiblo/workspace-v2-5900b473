@@ -1,0 +1,8 @@
+prompt,filename,resolution,aspectRatio,style,referenceImages
+"App icon for weather app: Sun behind cloud, iOS glassmorphism style",icon-weather.png,4K,square,glassy,
+"App icon for fitness app: Stylized dumbbell with neon glow",icon-fitness.png,4K,square,neon,
+"App icon for notes app: Pencil and paper, minimal flat design",icon-notes.png,4K,square,flat,
+"Hero image: Abstract flowing gradient teal to purple",hero-abstract.png,4K,wide,,
+"Profile avatar: Professional woman, 30s, blazer, studio lighting",avatar-1.png,2K,square,,
+"Create variation from different angle",product-side.png,2K,square,,product.jpg
+"Combine style from first with subject from second",combined.png,4K,wide,,style.png|subject.jpg

@@ -1,0 +1,53 @@
+[
+  {
+    "prompt": "App icon for productivity app: Minimalist checkmark inside rounded square. Navy blue (#1e3a5f) and white only. Swiss design, no gradients. Full-bleed square.",
+    "filename": "icon-productivity.png",
+    "resolution": "4K",
+    "aspectRatio": "square",
+    "style": "minimalism"
+  },
+  {
+    "prompt": "Hero background for SaaS landing: Abstract gradient mesh with purple (#8B5CF6) and blue (#3B82F6). Flowing organic shapes. Space on left for headline text.",
+    "filename": "hero-saas.png",
+    "resolution": "4K",
+    "aspectRatio": "wide"
+  },
+  {
+    "prompt": "OG image for tech startup: Left zone shows 'Launch Day' headline, right zone shows floating laptop with dashboard. White background, green (#10B981) accents. Clean SaaS style.",
+    "filename": "og-launch.png",
+    "resolution": "2K",
+    "aspectRatio": "16:9"
+  },
+  {
+    "prompt": "Professional portrait avatar: Woman in her 30s, wearing navy blazer, confident approachable smile. Soft studio lighting, neutral gray background.",
+    "filename": "avatar-team-1.png",
+    "resolution": "2K",
+    "aspectRatio": "square"
+  },
+  {
+    "prompt": "Professional portrait avatar: Man in his 40s, wearing gray suit jacket, warm friendly expression. Soft studio lighting, neutral gray background.",
+    "filename": "avatar-team-2.png",
+    "resolution": "2K",
+    "aspectRatio": "square"
+  },
+  {
+    "prompt": "Subtle geometric pattern: Interlocking hexagons with thin lines. Navy (#1E3A5F) on white. Medium density. Seamless tileable.",
+    "filename": "pattern-hex.png",
+    "resolution": "2K",
+    "aspectRatio": "square"
+  },
+  {
+    "prompt": "Create a variation of this product from a 3/4 angle view",
+    "filename": "product-angle-34.png",
+    "resolution": "2K",
+    "aspectRatio": "square",
+    "referenceImages": ["product-front.jpg"]
+  },
+  {
+    "prompt": "Combine these two images into a cohesive hero banner. Use the style from the first image and the subject from the second.",
+    "filename": "hero-combined.png",
+    "resolution": "4K",
+    "aspectRatio": "wide",
+    "referenceImages": ["style-reference.png", "subject-reference.jpg"]
+  }
+]
