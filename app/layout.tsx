@@ -5,6 +5,7 @@ import "./globals.css"
 // import { Footer } from "@/components/layout/Footer"
 import { JsonLd, generateLocalBusinessSchema } from "@/lib/seo/json-ld"
 import { generateRootMetadata } from "@/lib/seo/metadata"
+import { WibloDesignBridge } from "@/components/wiblo-design-bridge"
 
 // Minimal PREVIEW_READY bridge: confirm successful render, no error detection
 const previewReadyBridgeScript = `
@@ -79,6 +80,8 @@ export default function RootLayout({
         </Script>
       </head>
       <body className={`${geistMono.variable} antialiased`}>
+        <WibloDesignBridge />
+
         {/* Skip link for keyboard navigation */}
         <a
           href="#main-content"
