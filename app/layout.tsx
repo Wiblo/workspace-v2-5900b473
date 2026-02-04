@@ -73,6 +73,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geistSans.className}>
+      <head>
+        <Script id="wiblo-preview-ready" strategy="beforeInteractive">
+          {previewReadyBridgeScript}
+        </Script>
+      </head>
       <body className={`${geistMono.variable} antialiased`}>
         {/* Skip link for keyboard navigation */}
         <a
