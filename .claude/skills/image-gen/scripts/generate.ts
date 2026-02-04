@@ -110,7 +110,7 @@ Options:
   -p, --prompt        Image description (required)
   -i, --input         Reference image(s) - can specify multiple (optional)
   -o, --output        Output filename (default: public/images/generated-{timestamp}.png)
-  -m, --model         Model to use: gemini-3-pro, gemini-flash (default: gemini-3-pro)
+  -m, --model         Model to use: gemini-3-pro, gemini-flash (default: gemini-flash)
   -r, --resolution    Resolution: 1K, 2K, 4K (default: 2K)
   -a, --aspect-ratio  Aspect ratio: square, portrait, landscape, wide, 4:3, 16:9, etc. (default: square)
   -s, --style         Style to apply (e.g., minimalism, glassy, neon)
@@ -141,7 +141,7 @@ async function main(): Promise<void> {
       prompt: { type: "string", short: "p" },
       input: { type: "string", short: "i", multiple: true },
       output: { type: "string", short: "o" },
-      model: { type: "string", short: "m", default: "gemini-3-pro" },
+      model: { type: "string", short: "m", default: "gemini-flash" },
       resolution: { type: "string", short: "r", default: "2K" },
       "aspect-ratio": { type: "string", short: "a", default: "square" },
       style: { type: "string", short: "s" },

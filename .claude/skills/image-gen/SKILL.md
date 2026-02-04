@@ -15,7 +15,7 @@ Generate and edit images using Gemini via Vercel AI Gateway.
 bun .claude/skills/image-gen/scripts/generate.ts \
   --prompt "A serene Japanese garden with cherry blossoms" \
   --output garden.png \
-  --model gemini-3-pro \
+  --model gemini-flash \
   --resolution 2K \
   --aspect-ratio landscape
 
@@ -54,7 +54,7 @@ bun .claude/skills/image-gen/scripts/edit.ts \
 
 | Parameter | Values | Default |
 |-----------|--------|---------|
-| `--model` | gemini-3-pro, gemini-flash | gemini-3-pro |
+| `--model` | gemini-3-pro, gemini-flash | gemini-flash |
 | `--resolution` | 1K, 2K, 4K | 2K |
 | `--aspect-ratio` | square, portrait, landscape, wide, 4:3, 3:2, 16:9, 9:16, 21:9 | square |
 | `--style` | minimalism, glassy, neon, geometric, flat, etc. | none |

@@ -1,0 +1,30 @@
+[
+  {
+    "prompt": "Modern physiotherapy treatment room at Proactive Therapy clinic, wide interior view, purple/plum accent walls matching reference, treatment bed with white linens, physiotherapy equipment, large windows with natural light, professional medical environment, warm lighting, purple brand colors, same style as reference",
+    "filename": "treatment-room.png",
+    "resolution": "2K",
+    "aspectRatio": "landscape",
+    "referenceImages": ["public/images/proactive-therapy/reference-hero.png"]
+  },
+  {
+    "prompt": "Exterior street level view of Proactive Therapy physiotherapy clinic building in Johannesburg South Africa, modern architecture, purple/plum signage matching brand colors from reference, glass storefront, professional healthcare facility, African urban setting, sunny day, welcoming entrance",
+    "filename": "exterior.png",
+    "resolution": "2K",
+    "aspectRatio": "landscape",
+    "referenceImages": ["public/images/proactive-therapy/reference-hero.png"]
+  },
+  {
+    "prompt": "Physiotherapy gym and rehabilitation area at Proactive Therapy clinic, three-quarter view showing exercise equipment, rehabilitation machines, purple/plum accent colors matching reference, exercise mats, large mirrors, natural lighting, modern fitness therapy space, same interior design style",
+    "filename": "gym-area.png",
+    "resolution": "2K",
+    "aspectRatio": "landscape",
+    "referenceImages": ["public/images/proactive-therapy/reference-hero.png"]
+  },
+  {
+    "prompt": "Waiting area lounge at Proactive Therapy physiotherapy clinic, comfortable white seating with purple/plum cushions and accents matching reference style, modern decor, indoor plants, welcoming healthcare reception space, natural lighting, same design aesthetic as reference",
+    "filename": "waiting-area.png",
+    "resolution": "2K",
+    "aspectRatio": "landscape",
+    "referenceImages": ["public/images/proactive-therapy/reference-hero.png"]
+  }
+]

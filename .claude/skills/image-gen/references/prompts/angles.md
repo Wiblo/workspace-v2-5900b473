@@ -1,7 +1,10 @@
 # Angle Variants
 
 Generate multiple views of the same subject from different angles.
-Use with batch.ts - construct batch JSON with angle descriptions.
+Best workflow for consistency:
+1) Generate a single front/hero image first.
+2) Use that image as a reference for all other angles in batch.ts.
+3) Keep the same background/lighting instructions across prompts.
 
 ## Available Angle Presets
 
@@ -48,25 +51,29 @@ When user asks "generate product shots from multiple angles", construct:
     "prompt": "Modern ceramic coffee mug, product photography, white background, side profile view 90 degrees, studio lighting",
     "filename": "mug-side.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mug-front.png"]
   },
   {
     "prompt": "Modern ceramic coffee mug, product photography, white background, three-quarter view 45 degree angle, studio lighting",
     "filename": "mug-3-4.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mug-front.png"]
   },
   {
     "prompt": "Modern ceramic coffee mug, product photography, white background, top-down view from directly above, studio lighting",
     "filename": "mug-above.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mug-front.png"]
   },
   {
     "prompt": "Modern ceramic coffee mug, product photography, white background, close-up detail shot of handle, studio lighting",
     "filename": "mug-detail.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mug-front.png"]
   }
 ]
 ```
@@ -85,13 +92,15 @@ When user asks "generate product shots from multiple angles", construct:
     "prompt": "3D shield icon with checkmark, glossy material, three-quarter view 45 degrees, studio lighting, dark background",
     "filename": "icon-3-4.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["icon-front.png"]
   },
   {
     "prompt": "3D shield icon with checkmark, glossy material, hero shot dramatic angle slight tilt, studio lighting, dark background",
     "filename": "icon-hero.png",
     "resolution": "4K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["icon-front.png"]
   }
 ]
 ```
@@ -110,33 +119,37 @@ When user asks "generate product shots from multiple angles", construct:
     "prompt": "Friendly robot mascot character, cartoon style, side profile facing left, clean background",
     "filename": "mascot-profile.png",
     "resolution": "2K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mascot-front.png"]
   },
   {
     "prompt": "Friendly robot mascot character, cartoon style, three-quarter view, waving pose, clean background",
     "filename": "mascot-3-4.png",
     "resolution": "2K",
-    "aspectRatio": "square"
+    "aspectRatio": "square",
+    "referenceImages": ["mascot-front.png"]
   },
   {
     "prompt": "Friendly robot mascot character, cartoon style, full body standing pose, clean background",
     "filename": "mascot-full.png",
     "resolution": "2K",
-    "aspectRatio": "3:4"
+    "aspectRatio": "3:4",
+    "referenceImages": ["mascot-front.png"]
   }
 ]
 ```
 
 ## Using with Reference Images
 
-If user provides a reference image, use edit.ts instead:
+For consistent angles, generate a front view first, then reference it for the rest:
 
 ```bash
-npx tsx edit.ts \
-  --input product-photo.jpg \
-  --prompt "Show this product from a top-down view" \
-  --output product-above.png
+bun .claude/skills/image-gen/scripts/generate.ts \
+  --prompt "Modern ceramic coffee mug, product photography, white background, front view straight on, studio lighting" \
+  --output public/images/mug-front.png
 ```
+
+Then use that front image as the reference in batch JSON/CSV or one-off edits.
 
 ## Tips
 

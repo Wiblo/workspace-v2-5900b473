@@ -107,7 +107,7 @@ Options:
   -i, --input         Input image file(s) - can specify multiple (required)
   -p, --prompt        Editing instructions (required)
   -o, --output        Output filename (default: public/images/edited-{timestamp}.png)
-  -m, --model         Model to use: gemini-3-pro, gemini-flash (default: gemini-3-pro)
+  -m, --model         Model to use: gemini-3-pro, gemini-flash (default: gemini-flash)
   -a, --aspect-ratio  Output aspect ratio (default: auto from input)
   -r, --resolution    Resolution: 1K, 2K, 4K (default: auto from input)
   -h, --help          Show this help message
@@ -139,7 +139,7 @@ async function main(): Promise<void> {
       input: { type: "string", short: "i", multiple: true },
       prompt: { type: "string", short: "p" },
       output: { type: "string", short: "o" },
-      model: { type: "string", short: "m", default: "gemini-3-pro" },
+      model: { type: "string", short: "m", default: "gemini-flash" },
       "aspect-ratio": { type: "string", short: "a" },
       resolution: { type: "string", short: "r" },
       help: { type: "boolean", short: "h", default: false },

@@ -192,7 +192,7 @@ Options:
   -i, --input       Input file (JSON or CSV) containing prompts (required)
   -o, --output-dir  Output directory for generated images (default: public/images/batch-{timestamp})
   -p, --parallel    Number of parallel generations (default: 3)
-  -m, --model       Default model for all prompts: gemini-3-pro, gemini-flash (default: gemini-3-pro)
+  -m, --model       Default model for all prompts: gemini-3-pro, gemini-flash (default: gemini-flash)
   -h, --help        Show this help message
 
 JSON Format:
@@ -368,7 +368,7 @@ async function main(): Promise<void> {
       input: { type: "string", short: "i" },
       "output-dir": { type: "string", short: "o", default: generateTimestampDir() },
       parallel: { type: "string", short: "p", default: "3" },
-      model: { type: "string", short: "m", default: "gemini-3-pro" },
+      model: { type: "string", short: "m", default: "gemini-flash" },
       help: { type: "boolean", short: "h", default: false },
     },
     strict: false,

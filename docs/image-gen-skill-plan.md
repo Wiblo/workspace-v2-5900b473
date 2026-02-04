@@ -46,7 +46,7 @@ Generate and edit images using Gemini via Vercel AI Gateway.
 bun ~/.claude/skills/image-gen/scripts/generate.ts \
   --prompt "A serene Japanese garden with cherry blossoms" \
   --output garden.png \
-  --model gemini-3-pro \
+  --model gemini-flash \
   --resolution 4K \
   --aspect-ratio landscape
 ```
@@ -78,7 +78,7 @@ bun ~/.claude/skills/image-gen/scripts/edit.ts \
 
 | Parameter | Values | Default |
 |-----------|--------|---------|
-| `--model` | gemini-3-pro, gemini-flash | gemini-3-pro |
+| `--model` | gemini-3-pro, gemini-flash | gemini-flash |
 | `--resolution` | 1K, 2K, 4K | 2K |
 | `--aspect-ratio` | square, portrait, landscape, wide, 4:3, 3:2 | square |
 | `--style` | minimalism, glassy, neon, geometric, flat, etc. | none |
@@ -140,7 +140,7 @@ async function main() {
     options: {
       prompt: { type: 'string', short: 'p' },
       output: { type: 'string', short: 'o', default: `public/images/generated-${Date.now()}.png` },
-      model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
+      model: { type: 'string', short: 'm', default: 'gemini-flash' },
       resolution: { type: 'string', short: 'r', default: '2K' },
       'aspect-ratio': { type: 'string', short: 'a', default: 'square' },
       style: { type: 'string', short: 's' },
@@ -159,7 +159,7 @@ async function main() {
   }
 
   const gateway = createGateway({ apiKey });
-  const modelId = MODELS[values.model as keyof typeof MODELS] || MODELS['gemini-3-pro'];
+  const modelId = MODELS[values.model as keyof typeof MODELS] || MODELS['gemini-flash'];
   const aspectRatio = ASPECT_RATIOS[values['aspect-ratio'] as keyof typeof ASPECT_RATIOS] || '1:1';
 
   // Build prompt with optional style
@@ -235,7 +235,7 @@ async function main() {
       input: { type: 'string', short: 'i' },
       'output-dir': { type: 'string', short: 'o', default: `public/images/batch-${Date.now()}` },
       parallel: { type: 'string', short: 'p', default: '3' },
-      model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
+      model: { type: 'string', short: 'm', default: 'gemini-flash' },
     },
   });
 
@@ -331,7 +331,7 @@ async function main() {
       input: { type: 'string', short: 'i', multiple: true },
       prompt: { type: 'string', short: 'p' },
       output: { type: 'string', short: 'o', default: `public/images/edited-${Date.now()}.png` },
-      model: { type: 'string', short: 'm', default: 'gemini-3-pro' },
+      model: { type: 'string', short: 'm', default: 'gemini-flash' },
       resolution: { type: 'string', short: 'r' }, // Auto-detect from input if not set
     },
   });
@@ -364,7 +364,7 @@ async function main() {
   );
 
   const gateway = createGateway({ apiKey });
-  const modelId = `google/${values.model === 'gemini-flash' ? 'gemini-2.5-flash-image' : 'gemini-3-pro-image'}`;
+  const modelId = `google/${values.model === 'gemini-3-pro' ? 'gemini-3-pro-image' : 'gemini-2.5-flash-image'}`;
 
   console.log(`Editing ${values.input.length} image(s) with ${modelId}...`);
   console.log(`Prompt: ${values.prompt}`);
@@ -812,7 +812,10 @@ Create an app icon for a finance app. Style: minimalism. Colors: navy, white, go
 # Angle Variants
 
 Reference for generating multiple views of the same subject from different angles.
-Use this with batch.ts - the AI constructs the batch prompts based on this guidance.
+Best workflow for consistency:
+1) Generate a single front/hero image first.
+2) Use that image as a reference for all other angles in batch.ts.
+3) Keep the same background/lighting instructions across prompts.
 
 ## Angle Presets
 
@@ -853,29 +856,36 @@ construct a batch like this:
   },
   {
     "prompt": "Modern desk lamp, product photography, white background, side profile view",
-    "filename": "lamp-side.png"
+    "filename": "lamp-side.png",
+    "referenceImages": ["lamp-front.png"]
   },
   {
     "prompt": "Modern desk lamp, product photography, white background, three-quarter view 45 degree angle",
-    "filename": "lamp-3-4.png"
+    "filename": "lamp-3-4.png",
+    "referenceImages": ["lamp-front.png"]
   },
   {
     "prompt": "Modern desk lamp, product photography, white background, top-down view from above",
-    "filename": "lamp-above.png"
+    "filename": "lamp-above.png",
+    "referenceImages": ["lamp-front.png"]
   },
   {
     "prompt": "Modern desk lamp, product photography, white background, close-up detail shot",
-    "filename": "lamp-detail.png"
+    "filename": "lamp-detail.png",
+    "referenceImages": ["lamp-front.png"]
   }
 ]
 ```
 
 ## With Reference Image
 
-If user provides a reference image, use edit.ts with the angle description:
+Generate a front view first, then use it as the reference for angle variants:
 ```bash
-bun edit.ts --input lamp-photo.jpg --prompt "Show this from a top-down view" --output lamp-above.png
+bun .claude/skills/image-gen/scripts/generate.ts \
+  --prompt "Modern desk lamp, product photography, white background, front view straight on" \
+  --output public/images/lamp-front.png
 ```
+Then use `referenceImages: ["lamp-front.png"]` in batch JSON/CSV for the rest.
 ```
 
 ---
