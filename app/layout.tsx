@@ -1,34 +1,10 @@
 import { Geist, Geist_Mono } from "next/font/google"
-import Script from "next/script"
 import "./globals.css"
 // import { Navbar } from "@/components/layout/Navbar"
 // import { Footer } from "@/components/layout/Footer"
 import { JsonLd, generateLocalBusinessSchema } from "@/lib/seo/json-ld"
 import { generateRootMetadata } from "@/lib/seo/metadata"
 import { WibloDesignBridge } from "@/components/wiblo-design-bridge"
-
-// Minimal PREVIEW_READY bridge: confirm successful render, no error detection
-const previewReadyBridgeScript = `
-(function() {
-  if (typeof window === 'undefined') return
-  if (window.__wibloPreviewReadyBridge__) return
-  window.__wibloPreviewReadyBridge__ = true
-
-  function postReady() {
-    if (window.__wibloPreviewReadySent__) return
-    window.__wibloPreviewReadySent__ = true
-    try {
-      window.parent && window.parent.postMessage({ type: 'PREVIEW_READY' }, '*')
-    } catch (e) {}
-  }
-
-  if (document.readyState === 'complete') {
-    postReady()
-  } else {
-    window.addEventListener('load', postReady, { once: true })
-  }
-})()
-`
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -74,11 +50,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geistSans.className}>
-      <head>
-        <Script id="wiblo-preview-ready" strategy="beforeInteractive">
-          {previewReadyBridgeScript}
-        </Script>
-      </head>
       <body className={`${geistMono.variable} antialiased`}>
         <WibloDesignBridge />
 

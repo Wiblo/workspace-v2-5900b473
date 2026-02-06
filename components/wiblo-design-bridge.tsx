@@ -1,215 +1,805 @@
 "use client"
 
 import { useEffect } from "react"
-
-const STYLE_PROPS = [
-  "fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "textAlign", "color",
-  "backgroundColor", "backgroundImage", "padding", "paddingTop", "paddingRight", "paddingBottom",
-  "paddingLeft", "margin", "marginTop", "marginRight", "marginBottom", "marginLeft", "display",
-  "flexDirection", "justifyContent", "alignItems", "gap", "borderRadius", "borderWidth",
-  "borderColor", "borderStyle", "width", "height", "minWidth", "maxWidth", "minHeight", "maxHeight",
-]
-
-const IGNORE_TAGS = ["SCRIPT", "STYLE", "META", "LINK", "HEAD", "HTML", "NOSCRIPT"]
-
-declare global {
-  interface Window {
-    __wibloReportedErrors__?: Record<string, boolean>
-    __wibloPreviewReadySent__?: boolean
-  }
-}
+import { resolveReactContext } from "@/components/wiblo-design-mode/context/react-context"
+import {
+  attachSelectionCacheInvalidation,
+  invalidateSelectionCaches,
+} from "@/components/wiblo-design-mode/engine/cache"
+import { createSelectionSnapshot } from "@/components/wiblo-design-mode/engine/create-selection-snapshot"
+import {
+  DRAG_START_THRESHOLD_PX,
+  HOVER_EVENT_INTERVAL_MS,
+} from "@/components/wiblo-design-mode/engine/constants"
+import { getElementAtPosition } from "@/components/wiblo-design-mode/engine/get-element-at-position"
+import {
+  type DragRect,
+  getElementsInDrag,
+} from "@/components/wiblo-design-mode/engine/get-elements-in-drag"
+import { isValidSelectableElement } from "@/components/wiblo-design-mode/engine/is-valid-selectable-element"
+import {
+  freezeGlobalAnimations,
+  unfreezeGlobalAnimations,
+} from "@/components/wiblo-design-mode/freeze/freeze-animations"
+import {
+  freezePseudoStates,
+  unfreezePseudoStates,
+} from "@/components/wiblo-design-mode/freeze/freeze-pseudo-states"
+import {
+  createHighlightRenderer,
+  type HighlightRenderer,
+} from "@/components/wiblo-design-mode/overlay/highlight-renderer"
+import {
+  createBridgeEnvelope,
+  type BridgeCapabilities,
+  type IframeEventPayloadMap,
+  type IframeEventType,
+  type ParentCommandPayloadMap,
+  type ParentToIframeMessage,
+  type PreviewErrorInfo,
+  type SelectionSnapshot,
+  DESIGN_BRIDGE_PROTOCOL,
+  isBridgeConnectBootstrapMessage,
+  isDesignBridgeEnvelope,
+  isParentCommandType,
+} from "@/components/wiblo-design-mode/protocol"
 
 export function WibloDesignBridge() {
   useEffect(() => {
-    const reportedErrors = window.__wibloReportedErrors__ || {}
-    window.__wibloReportedErrors__ = reportedErrors
-
-    let enabled = false
-    let selectedEl: HTMLElement | null = null
-    let hoveredEl: HTMLElement | null = null
-
-    // === DESIGN MODE HIGHLIGHTING ===
-    const hoverHL = document.createElement("div")
-    hoverHL.style.cssText =
-      "position:fixed;pointer-events:none;border:2px solid #60a5fa;background:rgba(96,165,250,0.1);z-index:999998;display:none;box-sizing:border-box;"
-    document.body.appendChild(hoverHL)
-
-    const selectHL = document.createElement("div")
-    selectHL.style.cssText =
-      "position:fixed;pointer-events:none;border:2px solid #7156FF;background:rgba(113,86,255,0.1);z-index:999999;display:none;box-sizing:border-box;"
-    const label = document.createElement("span")
-    label.style.cssText =
-      "position:absolute;top:-22px;left:0;background:#7156FF;color:#fff;font-size:11px;font-weight:500;padding:2px 6px;border-radius:3px;font-family:system-ui;white-space:nowrap;"
-    selectHL.appendChild(label)
-    document.body.appendChild(selectHL)
-
-    const ignore = (el: HTMLElement) => !el || IGNORE_TAGS.includes(el.tagName)
-
-    const updateHighlight = (el: HTMLElement, hl: HTMLDivElement) => {
-      const r = el.getBoundingClientRect()
-      hl.style.top = r.top + "px"
-      hl.style.left = r.left + "px"
-      hl.style.width = r.width + "px"
-      hl.style.height = r.height + "px"
+    const capabilities: BridgeCapabilities = {
+      protocol: DESIGN_BRIDGE_PROTOCOL,
+      selectionModes: ["point", "drag"],
+      supportsReactContext: true,
+      supportsMultiSelectDrag: true,
+      supportsFreeze: true,
     }
 
-    const onScroll = () => {
-      if (!enabled) return
-      if (selectedEl && selectHL.style.display !== "none") {
-        updateHighlight(selectedEl, selectHL)
-      }
-      if (hoveredEl && hoverHL.style.display !== "none") {
-        updateHighlight(hoveredEl, hoverHL)
-      }
+    const renderer: HighlightRenderer = createHighlightRenderer()
+
+    let sessionId: string | null = null
+    let parentOrigin: string | null = null
+    let bridgePort: MessagePort | null = null
+    let isDesignModeEnabled = false
+    let startedAt = Date.now()
+
+    let selectedElements: Element[] = []
+    let selectedSnapshots: SelectionSnapshot[] = []
+    const enrichedReactContext = new WeakMap<Element, SelectionSnapshot["reactContext"]>()
+
+    let hoveredElement: Element | null = null
+
+    let pendingHoverSnapshot: SelectionSnapshot | null = null
+    let hoverEmitTimer: number | null = null
+    let lastHoverEmitAt = 0
+    let lastHoveredSelector: string | null = null
+
+    let activePointerId: number | null = null
+    let pointerDownPoint: { x: number; y: number } | null = null
+    let pointerCurrentPoint: { x: number; y: number } | null = null
+    let isDraggingSelection = false
+    let dragSelectedElements: Element[] = []
+    let isFreezeActive = false
+
+    let heartbeatTimer: number | null = null
+    let cacheInvalidationCleanup: (() => void) | null = null
+
+    const tempStyleMemory = new Map<HTMLElement, Map<string, string>>()
+    const emittedErrorKeys = new Set<string>()
+
+    const sendEvent = <TType extends IframeEventType>(
+      type: TType,
+      payload: IframeEventPayloadMap[TType]
+    ): void => {
+      if (!bridgePort || !sessionId) return
+
+      const message = createBridgeEnvelope(
+        sessionId,
+        type,
+        payload as Record<string, unknown>
+      )
+
+      bridgePort.postMessage(message)
     }
 
-    const getInfo = (el: HTMLElement) => {
-      const cs = getComputedStyle(el)
-      const r = el.getBoundingClientRect()
-      const styles: Record<string, string> = {}
-      STYLE_PROPS.forEach((p) => {
-        styles[p] = cs.getPropertyValue(p.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()))
-      })
-
-      const path: string[] = []
-      let cur: HTMLElement | null = el
-      while (cur && cur !== document.body) {
-        let s = cur.tagName.toLowerCase()
-        if (cur.id) {
-          path.unshift("#" + cur.id)
-          break
-        }
-        if (cur.className && typeof cur.className === "string") {
-          const cls = cur.className.split(" ").filter(Boolean).slice(0, 2)
-          if (cls.length) s += "." + cls.join(".")
-        }
-        path.unshift(s)
-        cur = cur.parentElement
-      }
-
-      return {
-        selector: path.join(" > "),
-        tagName: el.tagName.toLowerCase(),
-        className: typeof el.className === "string" ? el.className : "",
-        id: el.id || null,
-        textContent:
-          el.childNodes.length === 1 && el.childNodes[0]?.nodeType === 3 ? el.textContent?.slice(0, 100) : null,
-        rect: { top: r.top, left: r.left, width: r.width, height: r.height },
-        styles,
+    const clearHoverEmitTimer = (): void => {
+      if (hoverEmitTimer !== null) {
+        window.clearTimeout(hoverEmitTimer)
+        hoverEmitTimer = null
       }
     }
 
-    const onClick = (e: MouseEvent) => {
-      if (!enabled) return
-      const t = e.target as HTMLElement
-      if (ignore(t)) return
-      e.preventDefault()
-      e.stopPropagation()
-      selectedEl = t
-      selectHL.style.display = "block"
-      updateHighlight(t, selectHL)
-      label.textContent = t.tagName.toLowerCase()
-      window.parent?.postMessage({ type: "ELEMENT_CLICKED", element: getInfo(t) }, "*")
-    }
+    const flushPendingHover = (): void => {
+      hoverEmitTimer = null
 
-    const onOver = (e: MouseEvent) => {
-      if (!enabled) return
-      const t = e.target as HTMLElement
-      if (ignore(t) || t === selectedEl) {
-        hoverHL.style.display = "none"
-        hoveredEl = null
+      const nextSnapshot = pendingHoverSnapshot
+      pendingHoverSnapshot = null
+
+      const nextSelector = nextSnapshot?.selector ?? null
+      if (nextSelector === lastHoveredSelector) {
         return
       }
-      hoveredEl = t
-      hoverHL.style.display = "block"
-      updateHighlight(t, hoverHL)
+
+      lastHoveredSelector = nextSelector
+      lastHoverEmitAt = Date.now()
+
+      sendEvent("ELEMENT_HOVERED", { selection: nextSnapshot })
     }
 
-    const onOut = () => {
-      if (enabled) {
-        hoverHL.style.display = "none"
-        hoveredEl = null
+    const queueHoverEvent = (snapshot: SelectionSnapshot | null): void => {
+      pendingHoverSnapshot = snapshot
+
+      if (hoverEmitTimer !== null) {
+        return
+      }
+
+      const elapsed = Date.now() - lastHoverEmitAt
+      const delay = Math.max(0, HOVER_EVENT_INTERVAL_MS - elapsed)
+
+      hoverEmitTimer = window.setTimeout(flushPendingHover, delay)
+    }
+
+    const snapshotForElement = (
+      element: Element,
+      selectionMode: SelectionSnapshot["selectionMode"]
+    ): SelectionSnapshot =>
+      createSelectionSnapshot(
+        element,
+        selectionMode,
+        enrichedReactContext.get(element) ?? null
+        )
+
+    const createDragRect = (
+      startPoint: { x: number; y: number },
+      currentPoint: { x: number; y: number }
+    ): DragRect => ({
+      x: Math.min(startPoint.x, currentPoint.x),
+      y: Math.min(startPoint.y, currentPoint.y),
+      width: Math.abs(currentPoint.x - startPoint.x),
+      height: Math.abs(currentPoint.y - startPoint.y),
+    })
+
+    const getPointerTravelDistance = (
+      startPoint: { x: number; y: number },
+      currentPoint: { x: number; y: number }
+    ): number => {
+      const deltaX = currentPoint.x - startPoint.x
+      const deltaY = currentPoint.y - startPoint.y
+      return Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    }
+
+    const enableSelectionFreeze = (): void => {
+      if (isFreezeActive) return
+
+      freezePseudoStates()
+      freezeGlobalAnimations()
+      isFreezeActive = true
+    }
+
+    const disableSelectionFreeze = (): void => {
+      if (!isFreezeActive) return
+
+      unfreezePseudoStates()
+      unfreezeGlobalAnimations()
+      isFreezeActive = false
+    }
+
+    const getElementFromSelector = (selector: string): Element | null => {
+      try {
+        const element = document.querySelector(selector)
+        if (!element || !isValidSelectableElement(element)) return null
+        return element
+      } catch {
+        return null
       }
     }
 
-    const onMsg = (e: MessageEvent) => {
-      if (e.data?.type === "DESIGN_MODE_ENABLE") {
-        if (enabled) return  // Already enabled, ignore duplicate
-        enabled = true
-        document.body.style.cursor = "crosshair"
-        document.addEventListener("click", onClick, true)
-        document.addEventListener("mouseover", onOver, true)
-        document.addEventListener("mouseout", onOut, true)
-        window.addEventListener("scroll", onScroll, true)
-        window.parent?.postMessage({ type: "DESIGN_MODE_READY" }, "*")
-      } else if (e.data?.type === "DESIGN_MODE_DISABLE") {
-        enabled = false
-        document.body.style.cursor = ""
+    const enrichSelectionContext = (
+      element: Element,
+      snapshot: SelectionSnapshot
+    ): void => {
+      void resolveReactContext(element)
+        .then((context) => {
+          const index = selectedElements.findIndex((item) => item === element)
+          if (index < 0) return
+
+          if (!context) {
+            sendEvent("SELECTION_CONTEXT_ENRICHED", {
+              selection: snapshot,
+              resolved: false,
+            })
+            return
+          }
+
+          enrichedReactContext.set(element, context)
+
+          const enrichedSnapshot: SelectionSnapshot = {
+            ...snapshot,
+            reactContext: context,
+          }
+
+          selectedSnapshots[index] = enrichedSnapshot
+          renderer.setSelection(selectedSnapshots)
+
+          sendEvent("SELECTION_CONTEXT_ENRICHED", {
+            selection: enrichedSnapshot,
+            resolved: true,
+          })
+        })
+        .catch(() => {
+          sendEvent("SELECTION_CONTEXT_ENRICHED", {
+            selection: snapshot,
+            resolved: false,
+          })
+        })
+    }
+
+    const updateSelectionsFromElements = (): void => {
+      const selectionModesByElement = new Map(
+        selectedElements.map((element, index) => [
+          element,
+          selectedSnapshots[index]?.selectionMode ?? "point",
+        ])
+      )
+
+      const filteredElements = selectedElements.filter(
+        (element) => element.isConnected && isValidSelectableElement(element)
+      )
+
+      selectedElements = filteredElements
+      selectedSnapshots = filteredElements.map((element) =>
+        snapshotForElement(
+          element,
+          selectionModesByElement.get(element) ?? "point"
+        )
+      )
+
+      renderer.setSelection(selectedSnapshots)
+    }
+
+    const clearSelectionState = (): void => {
+      selectedElements = []
+      selectedSnapshots = []
+      renderer.setSelection([])
+    }
+
+    const selectElements = (
+      nextElements: Element[],
+      mode: SelectionSnapshot["selectionMode"]
+    ): void => {
+      const uniqueElements: Element[] = []
+
+      for (const element of nextElements) {
+        if (!isValidSelectableElement(element)) continue
+        if (!uniqueElements.includes(element)) {
+          uniqueElements.push(element)
+        }
+      }
+
+      selectedElements = uniqueElements
+      selectedSnapshots = uniqueElements.map((element) =>
+        snapshotForElement(element, mode)
+      )
+
+      renderer.setSelection(selectedSnapshots)
+      renderer.setHover(null)
+
+      hoveredElement = null
+      lastHoveredSelector = null
+      queueHoverEvent(null)
+
+      if (selectedSnapshots.length === 0) return
+
+      if (selectedSnapshots.length === 1) {
+        const singleSelection = selectedSnapshots[0]
+        if (singleSelection) {
+          sendEvent("ELEMENT_SELECTED", { selection: singleSelection })
+        }
+      } else {
+        sendEvent("ELEMENTS_SELECTED", {
+          selections: selectedSnapshots,
+        })
+      }
+
+      for (const [index, element] of selectedElements.entries()) {
+        const snapshot = selectedSnapshots[index]
+        if (!snapshot) continue
+        enrichSelectionContext(element, snapshot)
+      }
+    }
+
+    const resetPointerState = (): void => {
+      activePointerId = null
+      pointerDownPoint = null
+      pointerCurrentPoint = null
+      isDraggingSelection = false
+      dragSelectedElements = []
+      renderer.setDragRect(null)
+      disableSelectionFreeze()
+    }
+
+    const updateDragSelectionPreview = (): void => {
+      if (!pointerDownPoint || !pointerCurrentPoint) return
+
+      const dragRect = createDragRect(pointerDownPoint, pointerCurrentPoint)
+      renderer.setDragRect(dragRect)
+
+      const elements = getElementsInDrag(dragRect, isValidSelectableElement, true)
+      dragSelectedElements = elements
+
+      const snapshots = elements.map((element) =>
+        snapshotForElement(element, "drag")
+      )
+      renderer.setSelection(snapshots)
+    }
+
+    const emitPreviewError = (error: PreviewErrorInfo): void => {
+      const key = `${error.type}:${error.message.slice(0, 200)}`
+      if (emittedErrorKeys.has(key)) return
+
+      emittedErrorKeys.add(key)
+      sendEvent("PREVIEW_ERROR", { error })
+    }
+
+    const clearPreviewError = (errorType?: PreviewErrorInfo["type"]): void => {
+      if (errorType) {
+        for (const key of Array.from(emittedErrorKeys)) {
+          if (key.startsWith(`${errorType}:`)) {
+            emittedErrorKeys.delete(key)
+          }
+        }
+      } else {
+        emittedErrorKeys.clear()
+      }
+
+      sendEvent("PREVIEW_ERROR_CLEAR", {
+        errorType,
+      })
+    }
+
+    const stopHeartbeat = (): void => {
+      if (heartbeatTimer !== null) {
+        window.clearInterval(heartbeatTimer)
+        heartbeatTimer = null
+      }
+    }
+
+    const startHeartbeat = (): void => {
+      stopHeartbeat()
+
+      heartbeatTimer = window.setInterval(() => {
+        sendEvent("BRIDGE_HEARTBEAT", {
+          uptimeMs: Date.now() - startedAt,
+          designModeEnabled: isDesignModeEnabled,
+          selectionCount: selectedSnapshots.length,
+        })
+      }, 10000)
+    }
+
+    const attachInteractionListeners = (): void => {
+      const onPointerDown = (event: PointerEvent) => {
+        if (!isDesignModeEnabled || event.button !== 0) return
+
+        activePointerId = event.pointerId
+        pointerDownPoint = { x: event.clientX, y: event.clientY }
+        pointerCurrentPoint = { x: event.clientX, y: event.clientY }
+        isDraggingSelection = false
+        dragSelectedElements = []
+        renderer.setDragRect(null)
+
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      const onPointerMove = (event: PointerEvent) => {
+        if (!isDesignModeEnabled) return
+
+        if (activePointerId === event.pointerId && pointerDownPoint) {
+          pointerCurrentPoint = { x: event.clientX, y: event.clientY }
+
+          if (!isDraggingSelection) {
+            const travelDistance = getPointerTravelDistance(
+              pointerDownPoint,
+              pointerCurrentPoint
+            )
+            if (travelDistance >= DRAG_START_THRESHOLD_PX) {
+              isDraggingSelection = true
+              enableSelectionFreeze()
+            }
+          }
+
+          if (isDraggingSelection) {
+            updateDragSelectionPreview()
+          }
+
+          event.preventDefault()
+          event.stopPropagation()
+          return
+        }
+
+        const element = getElementAtPosition(event.clientX, event.clientY)
+
+        if (!element || selectedElements.includes(element)) {
+          if (hoveredElement) {
+            hoveredElement = null
+            renderer.setHover(null)
+            queueHoverEvent(null)
+          }
+          return
+        }
+
+        if (element === hoveredElement) {
+          return
+        }
+
+        hoveredElement = element
+
+        const snapshot = snapshotForElement(element, "point")
+        renderer.setHover(snapshot)
+        queueHoverEvent(snapshot)
+      }
+
+      const onPointerUp = (event: PointerEvent) => {
+        if (!isDesignModeEnabled || activePointerId !== event.pointerId) return
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        if (isDraggingSelection) {
+          const draggedElements = [...dragSelectedElements]
+          resetPointerState()
+          selectElements(draggedElements, "drag")
+          return
+        }
+
+        const element = getElementAtPosition(event.clientX, event.clientY)
+        resetPointerState()
+
+        if (!element) return
+        selectElements([element], "point")
+      }
+
+      const onPointerCancel = (event: PointerEvent) => {
+        if (activePointerId !== event.pointerId) return
+        resetPointerState()
+      }
+
+      const onClick = (event: MouseEvent) => {
+        if (!isDesignModeEnabled) return
+
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      const onContextMenu = (event: MouseEvent) => {
+        if (!isDesignModeEnabled) return
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      document.addEventListener("pointerdown", onPointerDown, true)
+      document.addEventListener("pointermove", onPointerMove, true)
+      document.addEventListener("pointerup", onPointerUp, true)
+      document.addEventListener("pointercancel", onPointerCancel, true)
+      document.addEventListener("click", onClick, true)
+      document.addEventListener("contextmenu", onContextMenu, true)
+
+      const cacheCleanup = attachSelectionCacheInvalidation(() => {
+        invalidateSelectionCaches()
+
+        if (hoveredElement && hoveredElement.isConnected && isValidSelectableElement(hoveredElement)) {
+          const snapshot = snapshotForElement(hoveredElement, "point")
+          renderer.setHover(snapshot)
+        } else {
+          hoveredElement = null
+          renderer.setHover(null)
+        }
+
+        if (isDraggingSelection) {
+          updateDragSelectionPreview()
+        } else {
+          updateSelectionsFromElements()
+        }
+      })
+
+      cacheInvalidationCleanup = () => {
+        cacheCleanup()
+        document.removeEventListener("pointerdown", onPointerDown, true)
+        document.removeEventListener("pointermove", onPointerMove, true)
+        document.removeEventListener("pointerup", onPointerUp, true)
+        document.removeEventListener("pointercancel", onPointerCancel, true)
         document.removeEventListener("click", onClick, true)
-        document.removeEventListener("mouseover", onOver, true)
-        document.removeEventListener("mouseout", onOut, true)
-        window.removeEventListener("scroll", onScroll, true)
-        hoverHL.style.display = "none"
-        selectHL.style.display = "none"
-        selectedEl = null
-        hoveredEl = null
+        document.removeEventListener("contextmenu", onContextMenu, true)
       }
     }
 
-    window.addEventListener("message", onMsg)
-    window.parent?.postMessage({ type: "BRIDGE_READY" }, "*")
-
-    // === PREVIEW_READY SIGNAL ===
-    const postPreviewReady = () => {
-      if (window.__wibloPreviewReadySent__) return
-      window.__wibloPreviewReadySent__ = true
-      window.parent?.postMessage({ type: "PREVIEW_READY" }, "*")
+    const detachInteractionListeners = (): void => {
+      cacheInvalidationCleanup?.()
+      cacheInvalidationCleanup = null
     }
 
-    postPreviewReady()
+    const restoreTempStylesForElement = (element: HTMLElement): void => {
+      const storedStyles = tempStyleMemory.get(element)
+      if (!storedStyles) return
 
-    if (document.readyState !== "complete") {
-      window.addEventListener("load", postPreviewReady)
+      for (const [property, value] of storedStyles.entries()) {
+        if (value) {
+          element.style.setProperty(property, value)
+        } else {
+          element.style.removeProperty(property)
+        }
+      }
+
+      tempStyleMemory.delete(element)
     }
 
-    // === ERROR OVERLAY DETECTION ===
+    const clearAllTempStyles = (): void => {
+      for (const element of Array.from(tempStyleMemory.keys())) {
+        restoreTempStylesForElement(element)
+      }
+    }
+
+    const setDesignModeEnabled = (enabled: boolean): void => {
+      if (enabled === isDesignModeEnabled) {
+        if (enabled) {
+          sendEvent("PREVIEW_READY", { capabilities })
+        }
+        return
+      }
+
+      isDesignModeEnabled = enabled
+
+      if (enabled) {
+        document.body.style.cursor = "crosshair"
+        attachInteractionListeners()
+
+        sendEvent("PREVIEW_READY", { capabilities })
+        return
+      }
+
+      document.body.style.cursor = ""
+      detachInteractionListeners()
+
+      clearHoverEmitTimer()
+      pendingHoverSnapshot = null
+      hoveredElement = null
+      lastHoveredSelector = null
+
+      renderer.setHover(null)
+      renderer.setDragRect(null)
+
+      resetPointerState()
+      clearSelectionState()
+      clearAllTempStyles()
+    }
+
+    const applyTempStyles = (
+      selector: string,
+      styles: ParentCommandPayloadMap["SELECTION_APPLY_TEMP_STYLES"]["styles"]
+    ): void => {
+      const element = getElementFromSelector(selector)
+      if (!element || !(element instanceof HTMLElement)) {
+        return
+      }
+
+      let styleMap = tempStyleMemory.get(element)
+      if (!styleMap) {
+        styleMap = new Map<string, string>()
+        tempStyleMemory.set(element, styleMap)
+      }
+
+      for (const [styleKey, styleValue] of Object.entries(styles)) {
+        const cssProperty = styleKey.replace(/[A-Z]/g, (value) => `-${value.toLowerCase()}`)
+
+        if (!styleMap.has(cssProperty)) {
+          styleMap.set(cssProperty, element.style.getPropertyValue(cssProperty))
+        }
+
+        if (typeof styleValue === "string") {
+          element.style.setProperty(cssProperty, styleValue)
+        }
+      }
+    }
+
+    const handleCommand = (message: ParentToIframeMessage): void => {
+      switch (message.type) {
+        case "DESIGN_MODE_SET_ENABLED": {
+          setDesignModeEnabled(true)
+          break
+        }
+
+        case "DESIGN_MODE_SET_DISABLED": {
+          setDesignModeEnabled(false)
+          break
+        }
+
+        case "SELECTION_HIGHLIGHT_SELECTOR": {
+          const selector = message.payload.selector
+
+          if (!selector) {
+            clearSelectionState()
+            renderer.setHover(null)
+            break
+          }
+
+          const element = getElementFromSelector(selector)
+          if (!element) {
+            clearSelectionState()
+            break
+          }
+
+          selectElements([element], "point")
+          break
+        }
+
+        case "SELECTION_APPLY_TEMP_STYLES": {
+          applyTempStyles(message.payload.selector, message.payload.styles)
+          break
+        }
+
+        case "SELECTION_CLEAR_TEMP_STYLES": {
+          const selector = message.payload.selector
+          if (selector) {
+            const element = getElementFromSelector(selector)
+            if (element instanceof HTMLElement) {
+              restoreTempStylesForElement(element)
+            }
+          } else {
+            clearAllTempStyles()
+          }
+          break
+        }
+
+        case "SELECTION_REQUEST_SNAPSHOT": {
+          if (message.payload.selector) {
+            const element = getElementFromSelector(message.payload.selector)
+            if (element) {
+              const snapshot = snapshotForElement(element, "point")
+              sendEvent("ELEMENT_SELECTED", { selection: snapshot })
+            }
+            break
+          }
+
+          if (selectedSnapshots.length === 1) {
+            const selection = selectedSnapshots[0]
+            if (selection) {
+              sendEvent("ELEMENT_SELECTED", { selection })
+            }
+          } else if (selectedSnapshots.length > 1) {
+            sendEvent("ELEMENTS_SELECTED", {
+              selections: selectedSnapshots,
+            })
+          }
+
+          break
+        }
+
+        case "BRIDGE_DISPOSE": {
+          setDesignModeEnabled(false)
+
+          if (bridgePort) {
+            bridgePort.onmessage = null
+            bridgePort.onmessageerror = null
+            bridgePort.close()
+          }
+
+          bridgePort = null
+          sessionId = null
+          parentOrigin = null
+
+          stopHeartbeat()
+          break
+        }
+      }
+    }
+
+    const handleBridgePortMessage = (event: MessageEvent<unknown>): void => {
+      if (!isDesignBridgeEnvelope(event.data)) return
+      if (!isParentCommandType(event.data.type)) return
+
+      if (!sessionId || event.data.sessionId !== sessionId) {
+        return
+      }
+
+      handleCommand(event.data as ParentToIframeMessage)
+    }
+
+    const handleBootstrapMessage = (event: MessageEvent<unknown>): void => {
+      if (!isBridgeConnectBootstrapMessage(event.data)) return
+      if (event.source !== window.parent) return
+      if (!event.ports || event.ports.length === 0) return
+
+      if (parentOrigin && parentOrigin !== event.origin) {
+        return
+      }
+
+      const [port] = event.ports
+      if (!port) return
+
+      if (bridgePort) {
+        bridgePort.onmessage = null
+        bridgePort.onmessageerror = null
+        bridgePort.close()
+      }
+
+      bridgePort = port
+      sessionId = event.data.sessionId
+      parentOrigin = event.origin
+      startedAt = Date.now()
+
+      bridgePort.onmessage = handleBridgePortMessage
+      bridgePort.onmessageerror = () => {
+        emitPreviewError({
+          type: "runtime",
+          message: "Bridge port message error",
+        })
+      }
+      bridgePort.start()
+
+      sendEvent("BRIDGE_CONNECTED", {
+        capabilities,
+        sessionToken: event.data.sessionToken,
+      })
+      startHeartbeat()
+    }
+
+    // Runtime error forwarding
+    const handleRuntimeError = (event: ErrorEvent): void => {
+      emitPreviewError({
+        type: "runtime",
+        message: event.message || "Runtime error",
+        filename: event.filename || undefined,
+        lineno: event.lineno || undefined,
+        colno: event.colno || undefined,
+        stack: event.error?.stack,
+      })
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
+      const reason = event.reason
+      const message =
+        typeof reason === "string"
+          ? reason
+          : reason instanceof Error
+            ? reason.message
+            : "Unhandled promise rejection"
+
+      emitPreviewError({
+        type: "unhandled-rejection",
+        message,
+        stack: reason instanceof Error ? reason.stack : undefined,
+      })
+    }
+
+    // Next.js overlay detection
     let shadowObserver: MutationObserver | null = null
     let observedPortal: Element | null = null
     let portalShadowAttempts = 0
     const MAX_PORTAL_SHADOW_ATTEMPTS = 10
     let lastOverlayPresent = false
 
-    // FIX: Check if element is actually visible (not hidden)
-    const isElementVisible = (el: Element): boolean => {
-      const htmlEl = el as HTMLElement
-      if (!htmlEl) return false
-      const style = window.getComputedStyle(htmlEl)
+    const isElementVisible = (element: Element): boolean => {
+      const htmlElement = element as HTMLElement
+      const style = window.getComputedStyle(htmlElement)
+
       return (
         style.display !== "none" &&
         style.visibility !== "hidden" &&
         style.opacity !== "0" &&
-        htmlEl.offsetParent !== null
+        htmlElement.offsetParent !== null
       )
     }
 
-    // FIX: Clear overlay keys from reportedErrors so same error can be re-reported
-    const clearOverlayKeys = () => {
-      Object.keys(reportedErrors).forEach((key) => {
-        if (key.startsWith("overlay:")) {
-          delete reportedErrors[key]
-        }
-      })
-    }
-
-    const extractOverlayMessage = (errorDialog: Element) => {
+    const extractOverlayMessage = (errorDialog: Element): string => {
       const header =
         (errorDialog.querySelector("[data-nextjs-dialog-header]") as HTMLElement | null)?.textContent?.trim() ??
         (errorDialog.querySelector("h1") as HTMLElement | null)?.textContent?.trim() ??
         ""
+
       const body =
         (errorDialog.querySelector("[data-nextjs-dialog-body]") as HTMLElement | null)?.textContent?.trim() ??
         (errorDialog.querySelector("[data-nextjs-error-message]") as HTMLElement | null)?.textContent?.trim() ??
         ""
+
       const codeframe =
         (errorDialog.querySelector("[data-nextjs-codeframe]") as HTMLElement | null)?.textContent?.trim() ??
         (errorDialog.querySelector("pre") as HTMLElement | null)?.textContent?.trim() ??
@@ -229,7 +819,7 @@ export function WibloDesignBridge() {
       return message.slice(0, 2000)
     }
 
-    const checkForNextjsErrorOverlay = () => {
+    const checkForNextjsErrorOverlay = (): void => {
       let errorDialog: Element | null =
         document.querySelector("[data-nextjs-dialog]") ||
         document.querySelector("[data-nextjs-error-overlay]") ||
@@ -245,44 +835,28 @@ export function WibloDesignBridge() {
         }
       }
 
-      // FIX: Also check if the overlay is actually visible
       if (errorDialog && !isElementVisible(errorDialog)) {
         errorDialog = null
       }
 
-      // If no visible overlay and we previously had one, send clear signal
       if (!errorDialog) {
         if (lastOverlayPresent) {
-          console.log("[Wiblo] Error overlay disappeared, sending clear signal")
           lastOverlayPresent = false
-          // FIX: Clear overlay keys so same error can be re-reported later
-          clearOverlayKeys()
-          window.parent?.postMessage(
-            { type: "PREVIEW_ERROR_CLEAR", errorType: "nextjs-overlay" },
-            "*"
-          )
+          clearPreviewError("nextjs-overlay")
         }
         return
       }
 
-      // Overlay is present and visible
       lastOverlayPresent = true
 
       const message = extractOverlayMessage(errorDialog)
-      const key = "overlay:" + message.slice(0, 100)
-      if (!message || reportedErrors[key]) return
-
-      reportedErrors[key] = true
-      window.parent?.postMessage(
-        {
-          type: "PREVIEW_ERROR",
-          error: { message, type: "nextjs-overlay" },
-        },
-        "*"
-      )
+      emitPreviewError({
+        type: "nextjs-overlay",
+        message,
+      })
     }
 
-    const observePortalShadowRoot = () => {
+    const observePortalShadowRoot = (): void => {
       const portal = document.querySelector("nextjs-portal")
 
       if (!portal) {
@@ -306,15 +880,13 @@ export function WibloDesignBridge() {
       if (!shadowRoot) {
         if (portalShadowAttempts < MAX_PORTAL_SHADOW_ATTEMPTS) {
           portalShadowAttempts += 1
-          setTimeout(observePortalShadowRoot, 50)
+          window.setTimeout(observePortalShadowRoot, 50)
         }
         return
       }
 
       if (!shadowObserver) {
-        shadowObserver = new MutationObserver(() => {
-          checkForNextjsErrorOverlay()
-        })
+        shadowObserver = new MutationObserver(checkForNextjsErrorOverlay)
         shadowObserver.observe(shadowRoot, {
           childList: true,
           subtree: true,
@@ -329,6 +901,11 @@ export function WibloDesignBridge() {
       observePortalShadowRoot()
       checkForNextjsErrorOverlay()
     })
+
+    window.addEventListener("message", handleBootstrapMessage)
+    window.addEventListener("error", handleRuntimeError)
+    window.addEventListener("unhandledrejection", handleUnhandledRejection)
+
     bodyObserver.observe(document.body, { childList: true, subtree: true })
 
     observePortalShadowRoot()
@@ -338,17 +915,29 @@ export function WibloDesignBridge() {
       window.addEventListener("load", checkForNextjsErrorOverlay)
     }
 
-    console.log("[Wiblo] Design bridge initialized")
-
     return () => {
-      window.removeEventListener("message", onMsg)
-      window.removeEventListener("scroll", onScroll, true)
+      clearHoverEmitTimer()
+      stopHeartbeat()
+      detachInteractionListeners()
+      setDesignModeEnabled(false)
+
+      window.removeEventListener("message", handleBootstrapMessage)
+      window.removeEventListener("error", handleRuntimeError)
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection)
       window.removeEventListener("load", checkForNextjsErrorOverlay)
-      window.removeEventListener("load", postPreviewReady)
+
       bodyObserver.disconnect()
       shadowObserver?.disconnect()
-      hoverHL.remove()
-      selectHL.remove()
+
+      if (bridgePort) {
+        bridgePort.onmessage = null
+        bridgePort.onmessageerror = null
+        bridgePort.close()
+      }
+
+      resetPointerState()
+      clearAllTempStyles()
+      renderer.dispose()
     }
   }, [])
 

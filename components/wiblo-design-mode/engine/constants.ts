@@ -1,0 +1,28 @@
+export const VIEWPORT_COVERAGE_THRESHOLD = 0.9
+export const OVERLAY_Z_INDEX_THRESHOLD = 1000
+export const DEV_TOOLS_OVERLAY_Z_INDEX_THRESHOLD = 2147483600
+
+export const ELEMENT_POSITION_CACHE_DISTANCE_THRESHOLD_PX = 2
+export const ELEMENT_POSITION_THROTTLE_MS = 16
+export const VISIBILITY_CACHE_TTL_MS = 50
+
+export const BOUNDS_CACHE_TTL_MS = 16
+export const MAX_TRANSFORM_ANCESTOR_DEPTH = 6
+export const TRANSFORM_EARLY_BAIL_DEPTH = 3
+
+export const HOVER_EVENT_INTERVAL_MS = Math.round(1000 / 30)
+export const DRAG_START_THRESHOLD_PX = 3
+
+export const DRAG_SELECTION_COVERAGE_THRESHOLD = 0.75
+export const DRAG_SELECTION_SAMPLE_SPACING_PX = 32
+export const DRAG_SELECTION_MIN_SAMPLES_PER_AXIS = 3
+export const DRAG_SELECTION_MAX_SAMPLES_PER_AXIS = 20
+export const DRAG_SELECTION_MAX_TOTAL_SAMPLE_POINTS = 100
+export const DRAG_SELECTION_EDGE_INSET_PX = 1
+
+export const FROZEN_ELEMENT_ATTRIBUTE = "data-wiblo-design-frozen"
+
+export const IGNORE_TAGS = ["SCRIPT", "STYLE", "META", "LINK", "HEAD", "HTML", "NOSCRIPT"] as const
+
+export const OVERLAY_ROOT_ATTRIBUTE = "data-wiblo-design-mode-overlay"
+export const USER_IGNORE_ATTRIBUTE = "data-wiblo-design-ignore"
