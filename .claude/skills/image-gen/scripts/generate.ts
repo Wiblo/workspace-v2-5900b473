@@ -14,7 +14,7 @@ import { parseArgs } from "node:util"
 import { readFile, writeFile, mkdir } from "node:fs/promises"
 import { dirname, resolve, extname } from "node:path"
 import { existsSync } from "node:fs"
-import { loadEnv } from "./env.js"
+import { loadEnv, resolveGatewayAuth } from "./env.js"
 
 // Common locations to search for input files
 const SEARCH_PATHS = [
@@ -163,11 +163,11 @@ async function main(): Promise<void> {
 
   loadEnv()
 
-  // Validate API key
-  const apiKey = process.env.AI_GATEWAY_API_KEY
-  if (!apiKey) {
-    console.error("Error: AI_GATEWAY_API_KEY environment variable is required")
-    console.error("Get your key from: https://vercel.com/ai-gateway")
+  // Resolve gateway auth (prefer direct gateway key, fallback to ANTHROPIC_AUTH_TOKEN)
+  const gatewayAuth = resolveGatewayAuth()
+  if (!gatewayAuth) {
+    console.error("Error: Missing gateway auth. Set AI_GATEWAY_API_KEY or ANTHROPIC_AUTH_TOKEN.")
+    console.error("Get a key from: https://vercel.com/ai-gateway")
     process.exit(1)
   }
 
@@ -222,6 +222,7 @@ async function main(): Promise<void> {
 
   console.log(`Generating image...`)
   console.log(`  Model: ${modelId}`)
+  console.log(`  Auth Source: ${gatewayAuth.source}`)
   console.log(`  Resolution: ${resolution}`)
   console.log(`  Aspect Ratio: ${aspectRatio}`)
   if (resolvedInputs.length > 0) {
@@ -230,7 +231,7 @@ async function main(): Promise<void> {
   console.log(`  Prompt: ${finalPrompt.slice(0, 100)}${finalPrompt.length > 100 ? "..." : ""}`)
 
   try {
-    const gateway = createGateway({ apiKey })
+    const gateway = createGateway({ apiKey: gatewayAuth.apiKey })
     const model = gateway(modelId)
 
     let result
@@ -330,7 +331,7 @@ async function main(): Promise<void> {
     console.error("\nError generating image:")
     if (error instanceof Error) {
       if (error.message.includes("api key")) {
-        console.error("  Authentication failed. Check your AI_GATEWAY_API_KEY.")
+        console.error("  Authentication failed. Check AI_GATEWAY_API_KEY or ANTHROPIC_AUTH_TOKEN.")
       } else if (error.message.includes("quota")) {
         console.error("  API quota exceeded. Check your usage limits.")
       } else {

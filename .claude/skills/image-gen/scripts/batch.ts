@@ -13,7 +13,7 @@ import { parseArgs } from "node:util"
 import { readFile, writeFile, mkdir } from "node:fs/promises"
 import { join, extname, resolve } from "node:path"
 import { existsSync } from "node:fs"
-import { loadEnv } from "./env.js"
+import { loadEnv, resolveGatewayAuth } from "./env.js"
 
 // Types
 interface BatchPrompt {
@@ -387,11 +387,11 @@ async function main(): Promise<void> {
 
   loadEnv()
 
-  // Validate API key
-  const apiKey = process.env.AI_GATEWAY_API_KEY
-  if (!apiKey) {
-    console.error("Error: AI_GATEWAY_API_KEY environment variable is required")
-    console.error("Get your key from: https://vercel.com/ai-gateway")
+  // Resolve gateway auth (prefer direct gateway key, fallback to ANTHROPIC_AUTH_TOKEN)
+  const gatewayAuth = resolveGatewayAuth()
+  if (!gatewayAuth) {
+    console.error("Error: Missing gateway auth. Set AI_GATEWAY_API_KEY or ANTHROPIC_AUTH_TOKEN.")
+    console.error("Get a key from: https://vercel.com/ai-gateway")
     process.exit(1)
   }
 
@@ -441,9 +441,10 @@ async function main(): Promise<void> {
   console.log(`  Prompts: ${prompts.length}`)
   console.log(`  Parallelism: ${parallelism}`)
   console.log(`  Default Model: ${defaultModel}`)
+  console.log(`  Auth Source: ${gatewayAuth.source}`)
   console.log("")
 
-  const gateway = createGateway({ apiKey })
+  const gateway = createGateway({ apiKey: gatewayAuth.apiKey })
   const results: { success: boolean; filename: string; error?: string }[] = []
   let completed = 0
 

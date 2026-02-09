@@ -78,7 +78,11 @@ When specifying reference images, the scripts search in:
 
 ## Environment
 
-Requires `AI_GATEWAY_API_KEY` environment variable (Vercel AI Gateway key).
+Requires either:
+- `AI_GATEWAY_API_KEY` (preferred), or
+- `ANTHROPIC_AUTH_TOKEN` (fallback)
+
+Both are treated as the Vercel AI Gateway auth token for these scripts.
 The scripts auto-load `.env`, `.env.local`, `.env.development`, and `.env.development.local` from the current working directory.
 
 ## Reference Templates

@@ -3,6 +3,11 @@ import { resolve } from "node:path"
 
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.development.local"]
 
+export interface GatewayAuthConfig {
+  apiKey: string
+  source: "AI_GATEWAY_API_KEY" | "ANTHROPIC_AUTH_TOKEN"
+}
+
 function stripQuotes(value: string): string {
   if (
     (value.startsWith("\"") && value.endsWith("\"")) ||
@@ -43,4 +48,24 @@ export function loadEnv(): void {
       }
     }
   }
+}
+
+export function resolveGatewayAuth(): GatewayAuthConfig | null {
+  const aiGatewayApiKey = process.env.AI_GATEWAY_API_KEY?.trim()
+  if (aiGatewayApiKey) {
+    return {
+      apiKey: aiGatewayApiKey,
+      source: "AI_GATEWAY_API_KEY",
+    }
+  }
+
+  const anthropicAuthToken = process.env.ANTHROPIC_AUTH_TOKEN?.trim()
+  if (anthropicAuthToken) {
+    return {
+      apiKey: anthropicAuthToken,
+      source: "ANTHROPIC_AUTH_TOKEN",
+    }
+  }
+
+  return null
 }
