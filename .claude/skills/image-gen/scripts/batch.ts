@@ -7,15 +7,27 @@
  *   bun .claude/skills/image-gen/scripts/batch.ts -i prompts.csv -o ./generated/ -p 5
  */
 
-import { generateText } from "ai"
-import { createGateway } from "@ai-sdk/gateway"
 import { parseArgs } from "node:util"
-import { readFile, writeFile, mkdir } from "node:fs/promises"
+import { readFile, mkdir } from "node:fs/promises"
 import { join, extname, resolve } from "node:path"
 import { existsSync } from "node:fs"
-import { loadEnv, resolveGatewayAuth } from "./env.js"
+import {
+  MODELS,
+  DEFAULT_MODEL,
+  resolveAspectRatio,
+  resolveResolution,
+  resolveInputImages,
+  saveImage,
+  initGateway,
+  listModels,
+} from "./shared.js"
+import { getProvider } from "./providers/index.js"
+import type { createGateway } from "@ai-sdk/gateway"
 
+// ---------------------------------------------------------------------------
 // Types
+// ---------------------------------------------------------------------------
+
 interface BatchPrompt {
   prompt: string
   filename?: string
@@ -23,89 +35,12 @@ interface BatchPrompt {
   resolution?: string
   aspectRatio?: string
   style?: string
-  referenceImages?: string[] // Paths to reference images
+  referenceImages?: string[]
 }
 
-// Common locations to search for input files
-const SEARCH_PATHS = [
-  "", // Current directory
-  "public/images/",
-  "public/uploads/",
-  "images/",
-  "assets/",
-  "input/",
-]
-
-function findInputFile(filename: string): { found: boolean; path?: string; searched: string[] } {
-  const searched: string[] = []
-
-  // If absolute path, check directly
-  if (filename.startsWith("/")) {
-    searched.push(filename)
-    if (existsSync(filename)) {
-      return { found: true, path: filename, searched }
-    }
-    return { found: false, searched }
-  }
-
-  // Search in common locations
-  for (const prefix of SEARCH_PATHS) {
-    const fullPath = resolve(prefix, filename)
-    searched.push(fullPath)
-    if (existsSync(fullPath)) {
-      return { found: true, path: fullPath, searched }
-    }
-  }
-
-  return { found: false, searched }
-}
-
-function getMimeType(filepath: string): string {
-  const ext = extname(filepath).toLowerCase()
-  switch (ext) {
-    case ".jpg":
-    case ".jpeg":
-      return "image/jpeg"
-    case ".png":
-      return "image/png"
-    case ".webp":
-      return "image/webp"
-    case ".gif":
-      return "image/gif"
-    default:
-      return "image/jpeg"
-  }
-}
-
-// Aspect ratio mappings
-const ASPECT_RATIOS: Record<string, string> = {
-  square: "1:1",
-  portrait: "9:16",
-  landscape: "16:9",
-  wide: "21:9",
-  "4:3": "4:3",
-  "3:4": "3:4",
-  "3:2": "3:2",
-  "2:3": "2:3",
-  "16:9": "16:9",
-  "9:16": "9:16",
-  "21:9": "21:9",
-}
-
-// Model ID mappings (Gemini only)
-const MODELS: Record<string, string> = {
-  "gemini-3-pro": "google/gemini-3-pro-image",
-  "gemini-flash": "google/gemini-2.5-flash-image",
-}
-
-// Resolution mappings
-const RESOLUTIONS = ["1K", "2K", "4K"] as const
-
-function generateTimestampDir(): string {
-  const now = new Date()
-  const timestamp = now.toISOString().replace(/[-:T]/g, "").slice(0, 14)
-  return `public/images/batch-${timestamp}`
-}
+// ---------------------------------------------------------------------------
+// CSV Parsing
+// ---------------------------------------------------------------------------
 
 function parseCSV(content: string): BatchPrompt[] {
   const lines = content.trim().split("\n")
@@ -165,9 +100,11 @@ function parseCSV(content: string): BatchPrompt[] {
         case "reference_images":
         case "reference-images":
         case "references":
-          // Parse as pipe-separated list (e.g., "img1.jpg|img2.png")
           if (value) {
-            item.referenceImages = value.split("|").map((s) => s.trim()).filter(Boolean)
+            item.referenceImages = value
+              .split("|")
+              .map((s) => s.trim())
+              .filter(Boolean)
           }
           break
       }
@@ -181,6 +118,91 @@ function parseCSV(content: string): BatchPrompt[] {
   return prompts
 }
 
+// ---------------------------------------------------------------------------
+// Single Image Generation (within batch)
+// ---------------------------------------------------------------------------
+
+async function generateSingleImage(
+  gateway: ReturnType<typeof createGateway>,
+  item: BatchPrompt,
+  index: number,
+  outputDir: string,
+  defaultModel: string
+): Promise<{ success: boolean; filename: string; error?: string }> {
+  const modelKey = item.model || defaultModel
+  const config = MODELS[modelKey]
+  if (!config) {
+    return {
+      success: false,
+      filename: "",
+      error: `Unknown model "${modelKey}". Available: ${listModels()}`,
+    }
+  }
+
+  const provider = getProvider(modelKey)
+  const { ratio: aspectRatio } = resolveAspectRatio(item.aspectRatio || "square")
+  const filename = item.filename || `image-${index + 1}.png`
+
+  // Resolve resolution (only for Gemini)
+  const resolution = config.supportsResolution
+    ? resolveResolution(item.resolution || "2K").resolution
+    : undefined
+
+  // Resolve reference images
+  let referenceImages = undefined
+  if (item.referenceImages?.length) {
+    if (config.maxReferenceImages === 0) {
+      return {
+        success: false,
+        filename,
+        error: `${modelKey} does not support reference images`,
+      }
+    }
+    const refs =
+      item.referenceImages.length > config.maxReferenceImages
+        ? item.referenceImages.slice(0, config.maxReferenceImages)
+        : item.referenceImages
+
+    try {
+      referenceImages = await resolveInputImages(refs)
+    } catch {
+      return {
+        success: false,
+        filename,
+        error: `Failed to resolve reference images for item ${index + 1}`,
+      }
+    }
+  }
+
+  try {
+    const result = await provider.generate(gateway, {
+      prompt: item.prompt,
+      aspectRatio,
+      resolution,
+      style: item.style,
+      referenceImages,
+    })
+
+    const outputPath = join(outputDir, filename)
+    await saveImage(result.buffer, outputPath)
+
+    return { success: true, filename }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, filename, error: errorMessage }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
+
+function generateTimestampDir(): string {
+  const now = new Date()
+  const timestamp = now.toISOString().replace(/[-:T]/g, "").slice(0, 14)
+  return `public/images/batch-${timestamp}`
+}
+
 function printUsage(): void {
   console.log(`
 Batch Image Generation Script
@@ -192,7 +214,7 @@ Options:
   -i, --input       Input file (JSON or CSV) containing prompts (required)
   -o, --output-dir  Output directory for generated images (default: public/images/batch-{timestamp})
   -p, --parallel    Number of parallel generations (default: 3)
-  -m, --model       Default model for all prompts: gemini-3-pro, gemini-flash (default: gemini-flash)
+  -m, --model       Default model for all prompts: ${listModels()} (default: ${DEFAULT_MODEL})
   -h, --help        Show this help message
 
 JSON Format:
@@ -200,6 +222,7 @@ JSON Format:
     {
       "prompt": "Description of image",
       "filename": "output-name.png",
+      "model": "flux-kontext-pro",
       "resolution": "2K",
       "aspectRatio": "16:9",
       "style": "minimalism",
@@ -208,9 +231,9 @@ JSON Format:
   ]
 
 CSV Format:
-  prompt,filename,resolution,aspectRatio,style,referenceImages
-  "A sunset over mountains",sunset.png,2K,landscape,,
-  "Create variation of this",variant.png,4K,square,,product.jpg|style.png
+  prompt,filename,model,resolution,aspectRatio,style,referenceImages
+  "A sunset over mountains",sunset.png,flux-kontext-pro,,,
+  "Create variation of this",variant.png,gemini-flash,2K,square,,product.jpg|style.png
 
 Reference Image Search Paths:
   - Current directory
@@ -226,149 +249,13 @@ Examples:
 `)
 }
 
-async function generateSingleImage(
-  gateway: ReturnType<typeof createGateway>,
-  item: BatchPrompt,
-  index: number,
-  outputDir: string,
-  defaultModel: string
-): Promise<{ success: boolean; filename: string; error?: string }> {
-  const modelKey = item.model || defaultModel
-  const modelId = MODELS[modelKey]
-  if (!modelId) {
-    return {
-      success: false,
-      filename: "",
-      error: `Unsupported model "${modelKey}". Supported models: ${Object.keys(MODELS).join(", ")}`,
-    }
-  }
-  const aspectRatio = ASPECT_RATIOS[item.aspectRatio || "square"] || "1:1"
-  const resolutionInput = (item.resolution || "2K").toUpperCase()
-  const resolution = RESOLUTIONS.includes(resolutionInput as typeof RESOLUTIONS[number])
-    ? (resolutionInput as typeof RESOLUTIONS[number])
-    : "2K"
-  if (resolution !== resolutionInput) {
-    console.warn(`Warning: Unknown resolution "${resolutionInput}", using 2K`)
-  }
-  const filename = item.filename || `image-${index + 1}.png`
-
-  // Build prompt with style
-  let finalPrompt = item.prompt
-  if (item.style) {
-    finalPrompt = `${finalPrompt}, ${item.style} style`
-  }
-
-  try {
-    const model = gateway(modelId)
-    let result
-
-    // Check if we have reference images
-    const referenceImages = item.referenceImages || []
-    const resolvedRefs: { path: string; mimeType: string }[] = []
-
-    for (const ref of referenceImages) {
-      const found = findInputFile(ref)
-      if (!found.found) {
-        return { success: false, filename, error: `Reference image not found: ${ref}` }
-      }
-      resolvedRefs.push({
-        path: found.path!,
-        mimeType: getMimeType(found.path!),
-      })
-    }
-
-    if (resolvedRefs.length > 0) {
-      // Load reference images
-      const imageContents = await Promise.all(
-        resolvedRefs.map(async (input) => {
-          const data = await readFile(input.path)
-          const base64 = data.toString("base64")
-          return {
-            type: "image" as const,
-            image: `data:${input.mimeType};base64,${base64}`,
-          }
-        })
-      )
-
-      // Build message parts: images first, then prompt
-      const messageParts: Array<{ type: "image" | "text"; image?: string; text?: string }> = [
-        ...imageContents,
-        { type: "text", text: finalPrompt },
-      ]
-
-      result = await generateText({
-        model,
-        messages: [
-          {
-            role: "user",
-            // @ts-expect-error - Type variance in content parts
-            content: messageParts,
-          },
-        ],
-        providerOptions: {
-          google: {
-            responseModalities: ["IMAGE"],
-            imageConfig: {
-              aspectRatio,
-              imageSize: resolution,
-            },
-          },
-        },
-      })
-    } else {
-      // Simple text-to-image (no reference images)
-      result = await generateText({
-        model,
-        prompt: finalPrompt,
-        providerOptions: {
-          google: {
-            responseModalities: ["IMAGE"],
-            imageConfig: {
-              aspectRatio,
-              imageSize: resolution,
-            },
-          },
-        },
-      })
-    }
-
-    const imageFiles = result.files?.filter((f) => f.mediaType?.startsWith("image/")) || []
-
-    if (imageFiles.length === 0) {
-      return { success: false, filename, error: "No image generated" }
-    }
-
-    // Save image
-    const imageData = imageFiles[0]
-    let buffer: Buffer
-
-    if (imageData.uint8Array) {
-      buffer = Buffer.from(imageData.uint8Array)
-    } else if (imageData.base64) {
-      // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-      const base64Data = imageData.base64.replace(/^data:image\/\w+;base64,/, "")
-      buffer = Buffer.from(base64Data, "base64")
-    } else {
-      return { success: false, filename, error: "Image data format not recognized" }
-    }
-
-    const outputPath = join(outputDir, filename)
-    await writeFile(outputPath, buffer)
-
-    return { success: true, filename }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    return { success: false, filename, error: errorMessage }
-  }
-}
-
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       input: { type: "string", short: "i" },
       "output-dir": { type: "string", short: "o", default: generateTimestampDir() },
       parallel: { type: "string", short: "p", default: "3" },
-      model: { type: "string", short: "m", default: "gemini-flash" },
+      model: { type: "string", short: "m", default: DEFAULT_MODEL },
       help: { type: "boolean", short: "h", default: false },
     },
     strict: false,
@@ -385,13 +272,12 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  loadEnv()
-
-  // Resolve gateway auth (prefer direct gateway key, fallback to ANTHROPIC_AUTH_TOKEN)
-  const gatewayAuth = resolveGatewayAuth()
-  if (!gatewayAuth) {
-    console.error("Error: Missing gateway auth. Set AI_GATEWAY_API_KEY or ANTHROPIC_AUTH_TOKEN.")
-    console.error("Get a key from: https://vercel.com/ai-gateway")
+  // Validate default model
+  const defaultModel = values.model as string
+  if (!MODELS[defaultModel]) {
+    console.error(
+      `Error: Unknown default model "${defaultModel}". Available: ${listModels()}`
+    )
     process.exit(1)
   }
 
@@ -413,7 +299,9 @@ async function main(): Promise<void> {
       prompts = JSON.parse(content)
     }
   } catch (error) {
-    console.error(`Error parsing input file: ${error instanceof Error ? error.message : error}`)
+    console.error(
+      `Error parsing input file: ${error instanceof Error ? error.message : error}`
+    )
     process.exit(1)
   }
 
@@ -422,18 +310,17 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  // Ensure output directory exists (mkdir with recursive is idempotent)
+  // Ensure output directory exists
   const outputDir = resolve(values["output-dir"] as string)
   await mkdir(outputDir, { recursive: true })
 
-  const parallelism = Math.max(1, Math.min(10, parseInt(values.parallel as string, 10) || 3))
-  const defaultModel = values.model as string
-  if (!MODELS[defaultModel]) {
-    console.error(
-      `Error: Unsupported default model "${defaultModel}". Supported models: ${Object.keys(MODELS).join(", ")}`
-    )
-    process.exit(1)
-  }
+  const parallelism = Math.max(
+    1,
+    Math.min(10, parseInt(values.parallel as string, 10) || 3)
+  )
+
+  // Init gateway
+  const { gateway, source } = initGateway()
 
   console.log(`\nBatch Image Generation`)
   console.log(`  Input: ${inputPath}`)
@@ -441,10 +328,9 @@ async function main(): Promise<void> {
   console.log(`  Prompts: ${prompts.length}`)
   console.log(`  Parallelism: ${parallelism}`)
   console.log(`  Default Model: ${defaultModel}`)
-  console.log(`  Auth Source: ${gatewayAuth.source}`)
+  console.log(`  Auth Source: ${source}`)
   console.log("")
 
-  const gateway = createGateway({ apiKey: gatewayAuth.apiKey })
   const results: { success: boolean; filename: string; error?: string }[] = []
   let completed = 0
 
@@ -465,7 +351,9 @@ async function main(): Promise<void> {
       if (result.success) {
         console.log(`✓ [${completed}/${prompts.length}] ${result.filename}`)
       } else {
-        console.log(`✗ [${completed}/${prompts.length}] ${result.filename}: ${result.error}`)
+        console.log(
+          `✗ [${completed}/${prompts.length}] ${result.filename}: ${result.error}`
+        )
       }
     }
   }
