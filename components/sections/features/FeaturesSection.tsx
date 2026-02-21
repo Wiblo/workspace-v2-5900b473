@@ -24,29 +24,29 @@ export function FeaturesSection({ className }: FeaturesSectionProps) {
   const blocks: FeatureBlock[] = [
     {
       id: "feature-1",
-      title: "Why Choose Us",
+      title: "Why Choose Proactive Therapy",
       description:
-        "We bring years of experience and dedication to every project. Our team is committed to delivering exceptional results that exceed your expectations. We take the time to understand your unique needs and tailor our approach accordingly.",
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=800&fit=crop",
-      imageAlt: "Team collaboration",
+        "Our team combines years of clinical experience with the latest research to deliver treatments that actually work. We take the time to listen, assess thoroughly, and create personalized plans that address the root cause of your pain \u2014 not just the symptoms.",
+      image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=800&fit=crop",
+      imageAlt: "Physiotherapist working with athlete",
       imagePosition: "right",
     },
     {
       id: "feature-2",
-      title: "Our Approach",
+      title: "Your Recovery, Your Way",
       description:
-        "We believe in a personalized approach that puts you first. From your initial consultation to the final result, we ensure clear communication and transparency at every step. Your satisfaction is our top priority.",
-      image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=800&fit=crop",
-      imageAlt: "Professional consultation",
+        "We know that every body is different. That\u2019s why we create individualized treatment plans that fit your lifestyle, goals, and schedule. Whether you\u2019re recovering from surgery, managing chronic pain, or wanting to improve your athletic performance, we\u2019ll build a program around you.",
+      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=800&fit=crop",
+      imageAlt: "Patient receiving hands-on physiotherapy treatment",
       imagePosition: "left",
     },
     {
       id: "feature-3",
-      title: "Results You Can Trust",
+      title: "Results You Can Feel",
       description:
-        "Our track record speaks for itself. We have helped countless clients achieve their goals and we are ready to help you too. Experience the difference that expertise and genuine care can make.",
-      image: "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=800&h=800&fit=crop",
-      imageAlt: "Successful results",
+        "Our patients don\u2019t just get better \u2014 they stay better. We equip you with the knowledge, exercises, and strategies to manage your condition long-term. With clear progress tracking and open communication, you\u2019ll always know exactly where you stand on your recovery journey.",
+      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=800&fit=crop",
+      imageAlt: "Patient performing rehabilitation exercises",
       imagePosition: "right",
     },
   ]

@@ -146,10 +146,8 @@ export function Footer() {
 
               {/* Book Appointment CTA */}
               {businessInfo.bookingUrl && (
-                <a
+                <Link
                   href={businessInfo.bookingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="group inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <span className="flex items-center gap-2">
@@ -159,7 +157,7 @@ export function Footer() {
                       <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" aria-hidden="true" />
                     </span>
                   </span>
-                </a>
+                </Link>
               )}
             </div>
           </div>

@@ -1,125 +1,148 @@
 /**
  * Services data - defines all services offered by the business.
  * Used by: FeaturedServices, ServicesGrid, ServiceCard, /services/[slug] pages
- *
- * This data drives:
- * - Service cards on homepage (FeaturedServices)
- * - Services listing page (ServicesGrid)
- * - Individual service detail pages (ServiceDetailSection)
- * - Service JSON-LD schema
  */
 
 export interface Service {
-  /** URL-friendly identifier (e.g., "deep-tissue-massage") */
   slug: string
-  /** Display name */
   name: string
-  /** Short description for cards (1-2 sentences) */
   shortDescription: string
-  /** Full description for detail page (can be multiple paragraphs) */
   description: string
-  /** Lucide icon name (e.g., "Heart", "Zap", "Clock") */
   icon?: string
-  /** Image path or URL */
   image?: string
-  /** Alt text for image */
   imageAlt?: string
-  /** Show on homepage featured section */
   featured?: boolean
-  /** Duration (e.g., "60 minutes") */
   duration?: string
-  /** Price (e.g., "$80" or "From $50") */
   price?: string
-  /** List of benefits/features */
   benefits?: string[]
-  /** Who this service is ideal for */
   idealFor?: string[]
 }
 
-/**
- * All services offered by the business.
- * Edit this array to add, remove, or modify services.
- */
 export const services: Service[] = [
   {
-    slug: "service-one",
-    name: "Service One",
+    slug: "sports-physiotherapy",
+    name: "Sports Physiotherapy",
     shortDescription:
-      "Brief description of this service. Explain the key benefit in one or two sentences.",
+      "Specialized treatment for sports injuries and performance optimization to get you back in the game faster.",
     description:
-      "Full description of Service One. Explain what the service includes, who it's for, and what benefits customers can expect.\n\nThis text appears on the individual service page. You can include multiple paragraphs to provide comprehensive information about the service.",
-    icon: "Star",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop",
-    imageAlt: "Service one image description",
+      "Our sports physiotherapy program is designed for athletes of all levels. We use evidence-based techniques to treat acute injuries, support post-surgical rehabilitation, and optimize athletic performance.\n\nWhether you're a weekend warrior or a competitive athlete, our therapists understand the demands of sport and will create a targeted recovery plan to get you back to peak performance.",
+    icon: "Zap",
+    image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=600&fit=crop",
+    imageAlt: "Physiotherapist working with an athlete on sports rehabilitation",
     featured: true,
     duration: "60 min",
-    price: "$100",
+    price: "$120",
     benefits: [
-      "First benefit of this service",
-      "Second benefit of this service",
-      "Third benefit of this service",
-      "Fourth benefit of this service",
+      "Faster return to sport",
+      "Injury prevention strategies",
+      "Sport-specific rehabilitation programs",
+      "Performance optimization techniques",
     ],
     idealFor: [
-      "First time clients",
-      "Specific condition",
-      "Another use case",
+      "Athletes recovering from injury",
+      "Weekend warriors with recurring pain",
+      "Competitive athletes seeking peak performance",
     ],
   },
   {
-    slug: "service-two",
-    name: "Service Two",
+    slug: "manual-therapy",
+    name: "Manual Therapy",
     shortDescription:
-      "Brief description of this service. Explain the key benefit in one or two sentences.",
+      "Hands-on treatment techniques including joint mobilization and soft tissue work to restore movement and reduce pain.",
     description:
-      "Full description of Service Two. Explain what the service includes, who it's for, and what benefits customers can expect.\n\nThis text appears on the individual service page.",
-    icon: "Heart",
+      "Manual therapy is a cornerstone of physiotherapy at Proactive Therapy. Our skilled therapists use their hands to mobilize joints, release tight muscles, and restore normal movement patterns.\n\nThis approach is particularly effective for stiff joints, muscle tension, headaches, and chronic pain conditions. Each session combines hands-on treatment with targeted exercises for lasting results.",
+    icon: "Hand",
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop",
-    imageAlt: "Service two image description",
+    imageAlt: "Physiotherapist performing manual therapy techniques on a patient",
     featured: true,
     duration: "45 min",
-    price: "$80",
+    price: "$100",
     benefits: [
-      "First benefit of this service",
-      "Second benefit of this service",
-      "Third benefit of this service",
+      "Improved joint mobility",
+      "Reduced muscle tension and pain",
+      "Better posture and alignment",
+      "Headache and migraine relief",
     ],
     idealFor: [
-      "Returning clients",
-      "Maintenance care",
+      "People with stiff or painful joints",
+      "Office workers with neck and back tension",
+      "Anyone with chronic pain conditions",
     ],
   },
   {
-    slug: "service-three",
-    name: "Service Three",
+    slug: "rehabilitation",
+    name: "Post-Surgery Rehabilitation",
     shortDescription:
-      "Brief description of this service. Explain the key benefit in one or two sentences.",
+      "Guided recovery programs after surgery to restore strength, mobility, and confidence in your body.",
     description:
-      "Full description of Service Three. Explain what the service includes, who it's for, and what benefits customers can expect.",
-    icon: "Zap",
-    image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&h=600&fit=crop",
-    imageAlt: "Service three image description",
+      "Recovering from surgery requires expert guidance to ensure a safe and complete return to your daily activities. Our post-surgery rehabilitation programs are designed in collaboration with your surgeon to optimize your recovery timeline.\n\nFrom knee replacements to shoulder reconstructions, we guide you through each phase of healing with progressive exercise programs, manual therapy, and education to help you regain full function.",
+    icon: "HeartPulse",
+    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=600&fit=crop",
+    imageAlt: "Patient performing rehabilitation exercises with physiotherapist guidance",
     featured: true,
-    duration: "30 min",
-    price: "$60",
+    duration: "60 min",
+    price: "$120",
     benefits: [
-      "First benefit of this service",
-      "Second benefit of this service",
+      "Structured recovery roadmap",
+      "Surgeon-aligned treatment plans",
+      "Progressive strength building",
+      "Safe return to daily activities",
+    ],
+    idealFor: [
+      "Post-knee or hip replacement patients",
+      "Post-ACL reconstruction recovery",
+      "Post-shoulder surgery rehabilitation",
     ],
   },
   {
-    slug: "service-four",
-    name: "Service Four",
+    slug: "chronic-pain-management",
+    name: "Chronic Pain Management",
     shortDescription:
-      "Brief description of this service. Explain the key benefit in one or two sentences.",
+      "Evidence-based approaches to understand, manage, and reduce persistent pain through movement and education.",
     description:
-      "Full description of Service Four. Explain what the service includes, who it's for, and what benefits customers can expect.",
+      "Living with chronic pain can feel overwhelming, but it doesn't have to control your life. Our chronic pain management program uses the latest evidence in pain science to help you understand your pain and develop strategies to reduce it.\n\nWe combine graded exercise, pain neuroscience education, manual therapy, and lifestyle modifications to help you regain control and get back to doing what you love.",
     icon: "Shield",
-    image: "https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=800&h=600&fit=crop",
-    imageAlt: "Service four image description",
+    image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&h=600&fit=crop",
+    imageAlt: "Therapist helping patient with chronic pain management exercises",
     featured: false,
-    duration: "90 min",
-    price: "$150",
+    duration: "60 min",
+    price: "$120",
+    benefits: [
+      "Better understanding of your pain",
+      "Reduced reliance on medication",
+      "Improved daily function and quality of life",
+      "Long-term self-management strategies",
+    ],
+    idealFor: [
+      "People with pain lasting more than 3 months",
+      "Those who have tried other treatments without success",
+      "Anyone wanting to reduce pain medication use",
+    ],
+  },
+  {
+    slug: "dry-needling",
+    name: "Dry Needling",
+    shortDescription:
+      "Targeted treatment using thin needles to release muscle trigger points, reduce tension, and relieve pain.",
+    description:
+      "Dry needling is an effective technique for treating muscular pain and tightness. Our trained therapists insert thin, sterile needles into myofascial trigger points to release tension, improve blood flow, and reduce pain.\n\nThis treatment is often combined with other physiotherapy techniques for the best results. It is particularly effective for conditions like neck pain, back pain, tennis elbow, and muscle strains.",
+    icon: "Target",
+    image: "https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=800&h=600&fit=crop",
+    imageAlt: "Dry needling treatment being performed on a patient",
+    featured: false,
+    duration: "30 min",
+    price: "$80",
+    benefits: [
+      "Rapid pain relief",
+      "Muscle tension release",
+      "Improved range of motion",
+      "Accelerated healing",
+    ],
+    idealFor: [
+      "People with muscle knots and trigger points",
+      "Athletes with recurring muscle tightness",
+      "Those with tension headaches",
+    ],
   },
 ]
 
@@ -127,34 +150,18 @@ export const services: Service[] = [
 // Helper Functions
 // ============================================================================
 
-/**
- * Get a single service by its slug.
- * Returns undefined if not found.
- */
 export function getServiceBySlug(slug: string): Service | undefined {
   return services.find((service) => service.slug === slug)
 }
 
-/**
- * Get all services marked as featured.
- * Used for homepage featured services section.
- */
 export function getFeaturedServices(): Service[] {
   return services.filter((service) => service.featured)
 }
 
-/**
- * Get all services.
- * Used for services listing page.
- */
 export function getAllServices(): Service[] {
   return services
 }
 
-/**
- * Get all service slugs.
- * Used for generateStaticParams in dynamic routes.
- */
 export function getAllServiceSlugs(): string[] {
   return services.map((service) => service.slug)
 }

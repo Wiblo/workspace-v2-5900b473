@@ -23,8 +23,8 @@ export function AboutPreview({ className }: AboutPreviewProps) {
           <div className="w-full md:w-1/2 lg:w-5/12">
             <div className="relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-2xl shadow-xl">
               <Image
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=800&fit=crop"
-                alt="Our team working together"
+                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=800&fit=crop"
+                alt="Physiotherapy team helping patient with rehabilitation"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 400px, 500px"
@@ -39,15 +39,16 @@ export function AboutPreview({ className }: AboutPreviewProps) {
             <div className="max-w-xl">
               {/* Title */}
               <h2 className="font-heading mb-6 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
-                About Us
+                About Proactive Therapy
               </h2>
 
               {/* Description */}
               <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
-                We are dedicated to providing exceptional service to our clients.
-                Our team of experienced professionals is committed to helping you
-                achieve your goals. With years of experience and a passion for
-                what we do, we deliver results that exceed expectations.
+                At Proactive Therapy, we believe in treating the whole person, not
+                just the symptom. Our team of experienced physiotherapists uses
+                evidence-based techniques to help you recover faster, move better,
+                and stay active. With personalized treatment plans tailored to your
+                goals, we&apos;re here to support you every step of the way.
               </p>
 
               {/* Link to About Page */}

@@ -17,8 +17,10 @@ const overlayOpacity = 20
 const heroContent = {
   subtitle: "What We Offer",
   title: "Our Services",
-  backgroundImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1080&fit=crop",
-  backgroundImageAlt: "Our services",
+  description:
+    "From sports injuries to chronic pain management, our physiotherapists provide expert care tailored to your needs.",
+  backgroundImage: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1920&h=1080&fit=crop",
+  backgroundImageAlt: "Physiotherapist providing hands-on treatment to a patient",
   ctaText: "Contact Us",
   ctaUrl: "/contact",
 }
@@ -87,6 +89,13 @@ export function ServicesHero({ className }: ServicesHeroProps) {
               >
                 {heroContent.title}
               </h1>
+
+              {/* Description */}
+              {heroContent.description && (
+                <p className="max-w-2xl text-lg text-white/90 md:text-xl">
+                  {heroContent.description}
+                </p>
+              )}
             </div>
           </div>
 

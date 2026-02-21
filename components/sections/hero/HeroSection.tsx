@@ -16,11 +16,11 @@ const overlayOpacity = 20
 
 /** Hero content - edit these values directly */
 const heroContent = {
-  subtitle: `Welcome to ${businessInfo.name}`,
-  title: "Your Compelling Headline Goes Here",
-  backgroundImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1080&fit=crop",
-  backgroundImageAlt: "Professional business environment",
-  ctaText: "Get Started",
+  subtitle: "Welcome to Proactive Therapy",
+  title: "Expert Physiotherapy to Keep You Moving",
+  backgroundImage: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1920&h=1080&fit=crop",
+  backgroundImageAlt: "Physiotherapist performing treatment on a patient",
+  ctaText: "Book Appointment",
   ctaUrl: businessInfo.bookingUrl || "/contact",
 }
 

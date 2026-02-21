@@ -1,60 +1,50 @@
 /**
  * FAQ data - frequently asked questions and answers.
  * Used by: FAQSection component (includes FAQPage JSON-LD schema)
- *
- * The FAQSection component automatically generates JSON-LD structured data
- * from this array, so search engines can display rich FAQ results.
  */
 
 export interface FAQ {
-  /** Unique identifier for accordion state */
   id: string
-  /** The question being asked */
   question: string
-  /** The answer to the question */
   answer: string
 }
 
-/**
- * Frequently asked questions.
- * Edit this array to add, remove, or modify FAQs.
- *
- * Tips:
- * - Keep answers concise but complete
- * - Use natural language that matches how customers ask
- * - Order by most commonly asked first
- * - Include questions that address common objections
- */
 export const faqs: FAQ[] = [
   {
     id: "faq-1",
-    question: "What is your first frequently asked question?",
+    question: "Do I need a referral to see a physiotherapist?",
     answer:
-      "This is the answer to your first FAQ. Provide a clear, helpful response that addresses the customer's concern. Keep it concise but complete.",
+      "No, you don't need a referral to book an appointment with us. You can contact us directly to schedule your first visit. However, if you're claiming through certain insurance plans, a doctor's referral may be required for reimbursement. We're happy to help you check your coverage.",
   },
   {
     id: "faq-2",
-    question: "What is your second frequently asked question?",
+    question: "What should I wear to my physiotherapy appointment?",
     answer:
-      "This is the answer to your second FAQ. You can include details about your services, policies, or anything customers commonly ask about.",
+      "Wear comfortable, loose-fitting clothing that allows easy movement and access to the area being treated. For lower body issues, shorts or leggings work well. For upper body concerns, a tank top or t-shirt is ideal. We also have private treatment rooms if you need to change.",
   },
   {
     id: "faq-3",
-    question: "What is your third frequently asked question?",
+    question: "How many sessions will I need?",
     answer:
-      "This is the answer to your third FAQ. Consider including information about pricing, availability, or what customers can expect.",
+      "The number of sessions varies depending on your condition, its severity, and your goals. After your initial assessment, your therapist will give you an estimated treatment plan. Many patients see improvement within 4-6 sessions, while more complex conditions may require ongoing care.",
   },
   {
     id: "faq-4",
-    question: "What is your fourth frequently asked question?",
+    question: "What happens during my first appointment?",
     answer:
-      "This is the answer to your fourth FAQ. Address common concerns or objections that potential customers might have.",
+      "Your first visit is a comprehensive assessment lasting about 60 minutes. Your therapist will discuss your medical history, assess your movement and strength, identify the root cause of your issue, and create a personalized treatment plan. You'll also receive initial treatment and home exercises.",
   },
   {
     id: "faq-5",
-    question: "What is your fifth frequently asked question?",
+    question: "Does physiotherapy hurt?",
     answer:
-      "This is the answer to your fifth FAQ. Include any additional information that helps customers make a decision.",
+      "Physiotherapy should not cause significant pain. While some techniques may cause mild discomfort, especially when treating tight or injured areas, your therapist will always communicate with you and adjust the treatment to your comfort level. The goal is to reduce pain, not increase it.",
+  },
+  {
+    id: "faq-6",
+    question: "Do you accept insurance?",
+    answer:
+      "Yes, we accept most major health insurance plans and can direct bill many providers. We recommend contacting your insurance company beforehand to confirm your physiotherapy coverage. Our front desk team can also help you navigate your benefits.",
   },
 ]
 
@@ -62,16 +52,10 @@ export const faqs: FAQ[] = [
 // Helper Functions
 // ============================================================================
 
-/**
- * Get all FAQs.
- */
 export function getAllFAQs(): FAQ[] {
   return faqs
 }
 
-/**
- * Get a subset of FAQs (e.g., for homepage preview).
- */
 export function getFAQsPreview(count: number = 3): FAQ[] {
   return faqs.slice(0, count)
 }

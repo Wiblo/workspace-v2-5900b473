@@ -26,27 +26,27 @@ export function AboutFeatures({ className }: FeaturesSectionProps) {
       id: "value-1",
       title: "Our Mission",
       description:
-        "We are driven by a simple yet powerful mission: to help our clients achieve their goals and improve their lives. Every decision we make is guided by this commitment to your success and well-being.",
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=800&fit=crop",
-      imageAlt: "Team collaboration meeting",
+        "We exist to empower people to take control of their physical health. Through expert physiotherapy, education, and ongoing support, we help our patients overcome pain, prevent injury, and achieve their movement goals \u2014 so they can keep doing what they love.",
+      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=800&fit=crop",
+      imageAlt: "Physiotherapist performing assessment",
       imagePosition: "right",
     },
     {
       id: "value-2",
       title: "Our Values",
       description:
-        "Integrity, excellence, and compassion form the foundation of everything we do. We believe in treating every client with respect and providing honest, transparent service that you can trust.",
-      image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=800&fit=crop",
-      imageAlt: "Professional team discussion",
+        "Evidence-based care, genuine compassion, and honest communication are the pillars of our practice. We believe in treating every patient as an individual, taking the time to listen, and being transparent about what to expect from treatment. Your trust means everything to us.",
+      image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=800&fit=crop",
+      imageAlt: "Collaborative physiotherapy session",
       imagePosition: "left",
     },
     {
       id: "value-3",
       title: "Our Commitment",
       description:
-        "We are committed to continuous improvement and staying at the forefront of our industry. Our team regularly participates in training and education to ensure we provide you with the best possible service.",
-      image: "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=800&h=800&fit=crop",
-      imageAlt: "Professional development",
+        "We are committed to your long-term wellbeing, not just short-term relief. Our therapists invest in ongoing education and training to stay at the cutting edge of physiotherapy. We measure our success by your outcomes \u2014 when you get better, we know we have done our job.",
+      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=800&fit=crop",
+      imageAlt: "Patient performing rehabilitation exercises with guidance",
       imagePosition: "right",
     },
   ]

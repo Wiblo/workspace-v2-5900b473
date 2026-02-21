@@ -6,20 +6,20 @@
  */
 export const businessInfo = {
   // Core Business Details
-  name: "Your Business Name",
-  tagline: "Your compelling tagline goes here",
+  name: "Proactive Therapy",
+  tagline: "Expert physiotherapy to keep you moving",
   description:
-    "A brief description of what your business does and who you serve. This appears in the footer and meta descriptions.",
+    "Proactive Therapy is a physiotherapy practice dedicated to helping you recover from injury, manage pain, and achieve your movement goals through evidence-based treatment.",
 
   // Contact Information
-  phone: "(555) 000-0000",
-  phoneSecondary: "", // Optional secondary phone number
-  email: "hello@example.com",
+  phone: "(555) 123-4567",
+  phoneSecondary: "",
+  email: "hello@proactivetherapy.com",
 
   // Physical Location
   address: {
-    street: "123 Main Street",
-    area: "", // Optional: neighborhood, suite, or building name
+    street: "123 Wellness Avenue",
+    area: "Suite 200",
     city: "Your City",
     state: "ST",
     zip: "00000",
@@ -34,22 +34,19 @@ export const businessInfo = {
 
   // Google Maps configuration
   maps: {
-    /** Google Maps Place ID (find at: https://developers.google.com/maps/documentation/places/web-service/place-id) */
     placeId: "",
-    /** Display name for the location on maps */
-    locationName: "Your Business Name",
-    /** Google Maps API key (optional, for embed without place ID) */
+    locationName: "Proactive Therapy",
     apiKey: "",
   },
 
   // Business Hours
   hours: {
-    monday: "9:00 AM - 5:00 PM",
-    tuesday: "9:00 AM - 5:00 PM",
-    wednesday: "9:00 AM - 5:00 PM",
-    thursday: "9:00 AM - 5:00 PM",
-    friday: "9:00 AM - 5:00 PM",
-    saturday: "Closed",
+    monday: "7:00 AM - 7:00 PM",
+    tuesday: "7:00 AM - 7:00 PM",
+    wednesday: "7:00 AM - 7:00 PM",
+    thursday: "7:00 AM - 7:00 PM",
+    friday: "7:00 AM - 5:00 PM",
+    saturday: "8:00 AM - 1:00 PM",
     sunday: "Closed",
   } as Record<string, string>,
 
@@ -66,12 +63,12 @@ export const businessInfo = {
   },
 
   // Website
-  url: "https://example.com",
-  logo: "/logo.png",
+  url: "https://proactivetherapy.com",
+  logo: "/images/logo-icon.png",
 
-  // Booking (leave empty string if no booking system)
-  bookingUrl: "https://example.com/book",
-  showBookingButton: true, // Set to false to hide booking buttons in navbar/footer
+  // Booking
+  bookingUrl: "/contact",
+  showBookingButton: true,
 
   // Optional: Price range for schema.org ($, $$, $$$, $$$$)
   priceRange: "$$",

@@ -104,7 +104,7 @@ export function getSocialLinksWithUrls(businessInfo: {
 export function getQuickLinksWithBooking(bookingUrl?: string): NavItem[] {
   const links = [...quickLinks]
 
-  if (bookingUrl) {
+  if (bookingUrl && !links.some((link) => link.href === bookingUrl)) {
     links.push({
       label: "Book Appointment",
       href: bookingUrl,

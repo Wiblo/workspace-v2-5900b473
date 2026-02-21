@@ -100,10 +100,8 @@ export function Navbar() {
             {businessInfo.showBookingButton && businessInfo.bookingUrl && (
               <div className="ml-2 hidden md:block">
                 <div className="flex items-center justify-end">
-                  <a
+                  <Link
                     href={businessInfo.bookingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="group relative flex min-h-10 items-center justify-center rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground transition-colors ease-in-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <span className="pointer-events-none absolute inset-0 rounded-lg bg-black/10 opacity-0 transition-opacity group-hover:opacity-100 hover:rounded-xl"></span>
@@ -114,7 +112,7 @@ export function Navbar() {
                         <ArrowRight className="absolute left-0 top-0 h-4 w-4 -translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" aria-hidden="true" />
                       </span>
                     </span>
-                  </a>
+                  </Link>
                 </div>
               </div>
             )}
@@ -144,15 +142,13 @@ export function Navbar() {
             ))}
             {businessInfo.showBookingButton && businessInfo.bookingUrl && (
               <li className="flex items-center pt-4">
-                <a
+                <Link
                   href={businessInfo.bookingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex min-h-10 w-full items-center justify-center rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Book Appointment
-                </a>
+                </Link>
               </li>
             )}
           </ul>
